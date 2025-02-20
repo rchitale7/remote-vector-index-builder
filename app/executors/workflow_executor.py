@@ -75,7 +75,7 @@ class WorkflowExecutor:
             else:
                 logger.info(f"Job {workflow.job_id} was cancelled during execution")
 
-        except (BuildError, ObjectStoreError, MemoryError, RuntimeError) as e:
+        except (Exception, BuildError, ObjectStoreError, MemoryError, RuntimeError) as e:
             logger.error(
                 f"Build process failed for job {workflow.job_id}: {str(e)}"
             )

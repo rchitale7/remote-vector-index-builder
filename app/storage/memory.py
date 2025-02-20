@@ -35,10 +35,6 @@ class InMemoryRequestStore(RequestStore):
         with self._lock:
             if len(self._store) >= self._max_size:
                 return False
-
-            if self._ttl_seconds is None:
-                self._store[job_id] = job
-                return True
             else:
                 self._store[job_id] = (job, datetime.now(timezone.utc))
                 return True
@@ -47,7 +43,13 @@ class InMemoryRequestStore(RequestStore):
         with self._lock:
             if job_id in self._store:
                 job, timestamp = self._store[job_id]
-                if self._ttl_seconds and datetime.now(timezone.utc) - timestamp < timedelta(seconds=self._ttl_seconds):
+                if (
+                        self._ttl_seconds is None or
+                        (
+                                self._ttl_seconds and
+                                datetime.now(timezone.utc) - timestamp < timedelta(seconds=self._ttl_seconds)
+                        )
+                ):
                     return job
                 else:
                     del self._store[job_id]

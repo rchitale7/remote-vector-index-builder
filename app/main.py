@@ -7,10 +7,10 @@
 
 from api.routes import build, status
 from fastapi import FastAPI
+
 from core.config import Settings
 from core.resources import ResourceManager
 from executors.workflow_executor import WorkflowExecutor
-from models.workflow import BuildWorkflow
 from services.index_builder import IndexBuilder
 from services.job_service import JobService
 from storage.factory import RequestStoreFactory
