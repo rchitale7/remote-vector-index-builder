@@ -8,7 +8,6 @@
 from pydantic_settings import BaseSettings
 from storage.types import RequestStoreType
 from typing import Optional
-from repositories.types import BlobStoreType
 
 class Settings(BaseSettings):
 
@@ -16,13 +15,6 @@ class Settings(BaseSettings):
     Settings class for the application. Pulls the settings
     from the Docker container environment variables
     """
-
-    blob_container_type: BlobStoreType = BlobStoreType.S3
-
-    # s3 container settings
-    s3_role_arn: Optional[str] = None
-    s3_region: str = 'us-west-2'
-    s3_retries: int = 3
 
     # Request Store settings
     request_store_type: RequestStoreType
