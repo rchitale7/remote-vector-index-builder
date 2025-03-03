@@ -47,6 +47,10 @@ class S3ObjectStore(ObjectStore):
     Attributes:
         DEFAULT_TRANSFER_CONFIG (dict): Default configuration for S3 file transfers,
             including chunk sizes, concurrency, and retry settings
+        DEFAULT_DOWNLOAD_ARGS (dict): Default boto3 ALLOWED_DOWNLOAD_ARGS values.
+            Includes encryption and checksum settings.
+        DEFAULT_UPLOAD_ARGS (dict): Default boto3 ALLOWED_UPLOAD_ARGS values.
+            Includes encryption and checksum settings
 
     Args:
         index_build_params (IndexBuildParameters): Parameters for the index building process
@@ -56,7 +60,7 @@ class S3ObjectStore(ObjectStore):
     DEFAULT_TRANSFER_CONFIG = {
         "multipart_chunksize": 10 * 1024 * 1024,  # 10MB
         "max_concurrency": (os.cpu_count() or 2)
-        // 2,  # os.cpu_count can None, according to mypy. If it is none, then default to 1 thread
+        // 2,  # os.cpu_count can be None, according to mypy. If it is none, then default to 1 thread
         "multipart_threshold": 10 * 1024 * 1024,  # 10MB
         "use_threads": True,
         "max_bandwidth": None,
@@ -64,6 +68,50 @@ class S3ObjectStore(ObjectStore):
         "num_download_attempts": 5,
         "max_io_queue": 100,
         "preferred_transfer_client": "auto",
+    }
+
+    DEFAULT_DOWNLOAD_ARGS = {
+        "ChecksumMode": "ENABLED",
+        "VersionId": None,
+        "SSECustomerAlgorithm": None,
+        "SSECustomerKey": None,
+        "SSECustomerKeyMD5": None,
+        "RequestPayer": None,
+        "ExpectedBucketOwner": None,
+    }
+
+    DEFAULT_UPLOAD_ARGS = {
+        "ACL": None,
+        "CacheControl": None,
+        "ChecksumAlgorithm": "SHA256",
+        "ContentDisposition": None,
+        "ContentEncoding": None,
+        "ContentLanguage": None,
+        "ContentType": None,
+        "ExpectedBucketOwner": None,
+        "Expires": None,
+        "GrantFullControl": None,
+        "GrantRead": None,
+        "GrantReadACP": None,
+        "GrantWriteACP": None,
+        "Metadata": None,
+        "RequestPayer": None,
+        "ServerSideEncryption": None,
+        "StorageClass": None,
+        "SSECustomerAlgorithm": None,
+        "SSECustomerKey": None,
+        "SSECustomerKeyMD5": None,
+        "SSEKMSKeyId": None,
+        "SSEKMSEncryptionContext": None,
+        "Tagging": None,
+        "WebsiteRedirectLocation": None,
+        "ChecksumType": None,
+        "MpuObjectSize": None,
+        "ChecksumCRC32": None,
+        "ChecksumCRC32C": None,
+        "ChecksumCRC64NVME": None,
+        "ChecksumSHA1": None,
+        "ChecksumSHA256": None,
     }
 
     def __init__(
@@ -90,7 +138,26 @@ class S3ObjectStore(ObjectStore):
 
         transfer_config = object_store_config.get("transfer_config", {})
         # Create transfer config with validated parameters
-        self.transfer_config = self._create_transfer_config(transfer_config)
+        # This is passed as the 'Config' parameter to the boto3 download and upload API calls
+        self.transfer_config = TransferConfig(
+            **S3ObjectStore._create_custom_config(
+                transfer_config, self.DEFAULT_TRANSFER_CONFIG
+            )
+        )
+
+        download_args = object_store_config.get("download_args", {})
+        # Create download args with validated parameters
+        # This is passed as the 'ExtraArgs' parameter to the boto3 download API call
+        self.download_args = S3ObjectStore._create_custom_config(
+            download_args, self.DEFAULT_DOWNLOAD_ARGS
+        )
+
+        upload_args = object_store_config.get("upload_args", {})
+        # Create upload args with validated parameters
+        # This is passed as the 'ExtraArgs' parameter to the boto3 upload API call
+        self.upload_args = S3ObjectStore._create_custom_config(
+            upload_args, self.DEFAULT_UPLOAD_ARGS
+        )
 
         self.debug = object_store_config.get("debug", False)
 
@@ -101,33 +168,37 @@ class S3ObjectStore(ObjectStore):
             self._write_progress = 0
             self._write_progress_lock = threading.Lock()
 
-    def _create_transfer_config(self, custom_config: Dict[str, Any]) -> TransferConfig:
+    @staticmethod
+    def _create_custom_config(
+        custom_config: Dict[str, Any], default_config: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
-        Creates a TransferConfig with custom parameters while maintaining defaults
-        for unspecified values.
+        Merges custom boto3 configuration parameters with default values, ensuring any
+        unspecified parameters retain their default settings.
 
         Args:
-            custom_config: Dictionary of custom transfer configuration parameters
+            custom_config (dict): User-provided configuration parameters to override defaults
+            default_config (dict): Base configuration parameters that will be used if not
+                specified in custom_config
 
         Returns:
-            TransferConfig: Configured transfer configuration object
+            dict: A merged configuration dictionary suitable for boto3 TransferConfig
+                or ExtraArgs parameters, where custom values take precedence over defaults
         """
-        # Start with default values
-        config_params = self.DEFAULT_TRANSFER_CONFIG.copy()
 
+        # Start with default values
+        config_params = default_config.copy()
         # Update with custom values, only if they are valid parameters
         for key, value in custom_config.items():
-            if key in self.DEFAULT_TRANSFER_CONFIG:
+            if key in default_config:
                 config_params[key] = value
             else:
-                logger.info(
-                    f"Warning: Ignoring invalid transfer config parameter: {key}"
-                )
+                logger.info(f"Warning: Ignoring invalid config parameter: {key}")
 
         # Remove None values to let boto3 use its internal defaults
         config_params = {k: v for k, v in config_params.items() if v is not None}
 
-        return TransferConfig(**config_params)
+        return config_params
 
     def read_blob(self, remote_store_path: str, bytes_buffer: BytesIO) -> None:
         """
@@ -173,6 +244,7 @@ class S3ObjectStore(ObjectStore):
                 bytes_buffer,
                 Config=self.transfer_config,
                 Callback=callback_func,
+                ExtraArgs=self.download_args,
             )
             return
         except ClientError as e:
@@ -219,6 +291,7 @@ class S3ObjectStore(ObjectStore):
                 remote_store_path,
                 Config=self.transfer_config,
                 Callback=callback_func,
+                ExtraArgs=self.upload_args,
             )
             return
         except ClientError as e:

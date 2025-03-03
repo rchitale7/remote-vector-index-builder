@@ -102,17 +102,32 @@ def test_s3_object_store_initialization_debug_config(index_build_params):
             assert store.debug
 
 
-def test_create_transfer_config(s3_object_store):
+def test_create_custom_config(index_build_params):
     custom_config = {
-        "multipart_chunksize": 20 * 1024 * 1024,
-        "max_concurrency": 8,
-        "invalid_param": "value",  # Should be ignored
+        "retries": 3,
+        "region": "us-west-2",
+        "debug": False,
+        "transfer_config": {
+            "multipart_chunksize": 20 * 1024 * 1024,
+            "max_concurrency": 8,
+            "invalid_param": "value",
+        },
+        "download_args": {"ChecksumMode": "DISABLED", "invalid_param": "value"},
+        "upload_args": {"ChecksumAlgorithm": "SHA1", "invalid_param": "value"},
     }
 
-    config = s3_object_store._create_transfer_config(custom_config)
-    assert config.multipart_chunksize == 20 * 1024 * 1024
-    assert config.max_concurrency == 8
-    assert "invalid_param" not in config.__dict__
+    with patch("core.object_store.s3.s3_object_store.get_boto3_client"):
+        store = S3ObjectStore(index_build_params, custom_config)
+        assert store.max_retries == 3
+        assert store.region == "us-west-2"
+        assert not store.debug
+        assert store.transfer_config.multipart_chunksize == 20 * 1024 * 1024
+        assert store.transfer_config.max_concurrency == 8
+        assert "invalid_param" not in store.transfer_config.__dict__
+        assert store.download_args["ChecksumMode"] == "DISABLED"
+        assert store.upload_args["ChecksumAlgorithm"] == "SHA1"
+        assert "invalid_param" not in store.download_args
+        assert "invalid_param" not in store.upload_args
 
 
 def test_read_blob_success(index_build_params, object_store_config, bytes_buffer):
@@ -127,6 +142,7 @@ def test_read_blob_success(index_build_params, object_store_config, bytes_buffer
             bytes_buffer,
             Config=store.transfer_config,
             Callback=None,
+            ExtraArgs=store.download_args,
         )
 
 
@@ -173,6 +189,7 @@ def test_write_blob_success(index_build_params, object_store_config):
             "remote/path",
             Config=store.transfer_config,
             Callback=None,
+            ExtraArgs=store.upload_args,
         )
 
 

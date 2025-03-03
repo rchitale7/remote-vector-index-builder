@@ -45,7 +45,7 @@ def index_build_params():
         doc_id_path="doc.knndid",
         dimension=128,
         doc_count=1000,
-        data_type="fp32",
+        data_type="float",
         repository_type="s3",
         container_name="test-bucket",
     )
