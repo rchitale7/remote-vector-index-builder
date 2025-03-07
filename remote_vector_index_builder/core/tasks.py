@@ -16,9 +16,12 @@ These tasks must be run in the following sequence, for a given build request:
 3. upload_index
 
 """
+from dataclasses import dataclass
 import logging
 from io import BytesIO
-from typing import Any, Dict
+import os
+import tempfile
+from typing import Any, Dict, Optional
 
 from core.common.models.index_build_parameters import IndexBuildParameters
 from core.common.models.vectors_dataset import VectorsDataset
@@ -26,8 +29,57 @@ from core.object_store.object_store_factory import ObjectStoreFactory
 
 logger = logging.getLogger(__name__)
 
-# TODO: Create build_index task
+@dataclass
+class TaskResult:
+    remote_path: Optional[str] = None
+    error: Optional[str] = None
 
+def run_tasks(index_build_params: IndexBuildParameters) -> TaskResult:
+    with tempfile.TemporaryDirectory() as temp_dir, BytesIO() as vector_buffer, BytesIO() as doc_id_buffer:
+        try:
+            logger.info(f"Starting task execution for vector path: {index_build_params.vector_path}")
+            object_store_config = {}
+            vectors_dataset = create_vectors_dataset(
+                index_build_params=index_build_params,
+                object_store_config=object_store_config,
+                vector_bytes_buffer=vector_buffer,
+                doc_id_bytes_buffer=doc_id_buffer,
+            )
+
+            index_local_path = os.path.join(temp_dir, index_build_params.vector_path)
+            build_gpu_index(
+                index_build_params=index_build_params,
+                vectors_dataset=vectors_dataset,
+                cpu_index_output_file_path=index_local_path
+            )
+
+            vectors_dataset.free_vectors_space()
+
+            remote_path = upload_index(
+                index_build_params=index_build_params,
+                object_store_config=object_store_config,
+                index_local_path=index_local_path
+            )
+
+            logger.info(f"Ending task execution for vector path: {index_build_params.vector_path}")
+            return TaskResult(
+                remote_path=remote_path
+            )
+        except Exception as e:
+            logger.error(f"Error running tasks: {e}")
+            return TaskResult(
+                error=str(e)
+            )
+
+
+# TODO: fill in implementation here
+def build_gpu_index(
+        index_build_params: IndexBuildParameters,
+        vectors_dataset: VectorsDataset,
+        cpu_index_output_file_path: str
+):
+    with open(cpu_index_output_file_path, 'w') as f:
+        f.write("File test!")
 
 def create_vectors_dataset(
     index_build_params: IndexBuildParameters,
@@ -96,7 +148,7 @@ def upload_index(
     index_build_params: IndexBuildParameters,
     object_store_config: Dict[str, Any],
     index_local_path: str,
-) -> None:
+) -> str:
     """
     Uploads a built index from a local path to the configured object store.
 
@@ -133,3 +185,5 @@ def upload_index(
     index_remote_path = vector_root_path + "." + index_build_params.engine
 
     object_store.write_blob(index_local_path, index_remote_path)
+
+    return index_remote_path
