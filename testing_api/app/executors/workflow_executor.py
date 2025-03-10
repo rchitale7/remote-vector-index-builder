@@ -64,7 +64,7 @@ class WorkflowExecutor:
                     workflow.job_id,
                     {
                         "status": status,
-                        "knn_index_path": index_path,
+                        "file_path": index_path,
                         "msg": msg
                     }
                 )
@@ -83,7 +83,7 @@ class WorkflowExecutor:
                 workflow.job.id,
                 {
                     "status": status,
-                    "knn_index_path": index_path,
+                    "file_path": index_path,
                     "msg": str(e)
                 }
             )
