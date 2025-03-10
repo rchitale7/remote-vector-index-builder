@@ -18,7 +18,7 @@ class Job(BaseModel):
     id: str
     status: JobStatus
     request_parameters: RequestParameters
-    knn_index_path: Optional[str] = None
+    file_path: Optional[str] = None
     msg: Optional[str] = None
 
     def compare_request_parameters(self, other: RequestParameters) -> bool:

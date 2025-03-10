@@ -29,4 +29,5 @@ class IndexBuilder:
             logger.info("Failed to build index!")
             return False, None, result.error
         logger.info("Index built successfully!")
+        logger.info(f"Index path: {result.remote_path}")
         return True, result.remote_path, "success!"

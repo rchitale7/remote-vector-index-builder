@@ -21,8 +21,8 @@ def get_status(job_id: str, request: Request) -> GetStatusResponse:
         "task_status": job.status
     }
 
-    if hasattr(job, 'knn_index_path')  and job.knn_index_path is not None:
-        response_data["knn_index_path"] = job.knn_index_path
+    if hasattr(job, 'file_path')  and job.file_path is not None:
+        response_data["file_path"] = job.file_path
 
     if hasattr(job, 'msg') and job.msg is not None:
         response_data["msg"] = job.msg

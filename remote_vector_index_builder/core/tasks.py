@@ -26,6 +26,7 @@ from typing import Any, Dict, Optional
 from core.common.models.index_build_parameters import IndexBuildParameters
 from core.common.models.vectors_dataset import VectorsDataset
 from core.object_store.object_store_factory import ObjectStoreFactory
+from core.index_builder.create_gpu_index import create_index
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,8 @@ def run_tasks(index_build_params: IndexBuildParameters) -> TaskResult:
         try:
             logger.info(f"Starting task execution for vector path: {index_build_params.vector_path}")
             object_store_config = {}
+
+            logger.info(f"Downloading vector and doc id blobs for vector path: {index_build_params.vector_path}")
             vectors_dataset = create_vectors_dataset(
                 index_build_params=index_build_params,
                 object_store_config=object_store_config,
@@ -47,14 +50,15 @@ def run_tasks(index_build_params: IndexBuildParameters) -> TaskResult:
             )
 
             index_local_path = os.path.join(temp_dir, index_build_params.vector_path)
+
+            logger.info(f"Building GPU index for vector path: {index_build_params.vector_path}")
             build_gpu_index(
                 index_build_params=index_build_params,
                 vectors_dataset=vectors_dataset,
                 cpu_index_output_file_path=index_local_path
             )
 
-            vectors_dataset.free_vectors_space()
-
+            logger.info(f"Uploading index for vector path: {index_build_params.vector_path}")
             remote_path = upload_index(
                 index_build_params=index_build_params,
                 object_store_config=object_store_config,
@@ -71,15 +75,17 @@ def run_tasks(index_build_params: IndexBuildParameters) -> TaskResult:
                 error=str(e)
             )
 
-
-# TODO: fill in implementation here
 def build_gpu_index(
         index_build_params: IndexBuildParameters,
         vectors_dataset: VectorsDataset,
         cpu_index_output_file_path: str
 ):
-    with open(cpu_index_output_file_path, 'w') as f:
-        f.write("File test!")
+    indexingParams = {
+        'dimensions': index_build_params.dimension
+    }
+
+    create_index(vectors_dataset, indexingParams, index_build_params.index_parameters.space_type, cpu_index_output_file_path)
+
 
 def create_vectors_dataset(
     index_build_params: IndexBuildParameters,

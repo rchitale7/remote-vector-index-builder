@@ -8,6 +8,7 @@ def test_imports():
     try:
         from core import create_vectors_dataset
         from core import upload_index
+        from core import build_gpu_index
         print("All imports successful!")
         return 0
     except ImportError as e:
