@@ -19,8 +19,8 @@ ENV PYTHONPATH='${PYTHONPATH}:/tmp/faiss/build/faiss/python:/remote_vector_index
 
 ENV REQUEST_STORE_TYPE='memory'
 
-ENV GPU_MEMORY_LIMIT=100
-ENV CPU_MEMORY_LIMIT=100
+ENV GPU_MEMORY_LIMIT=24
+ENV CPU_MEMORY_LIMIT=64
 
 ENV SERVICE_NAME='remote-vector-index-builder'
 
