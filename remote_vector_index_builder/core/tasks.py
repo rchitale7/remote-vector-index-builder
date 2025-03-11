@@ -22,6 +22,7 @@ from io import BytesIO
 import os
 import tempfile
 from typing import Any, Dict, Optional
+from memory_profiler import profile
 
 from core.common.models.index_build_parameters import IndexBuildParameters
 from core.common.models.vectors_dataset import VectorsDataset
@@ -35,35 +36,46 @@ class TaskResult:
     remote_path: Optional[str] = None
     error: Optional[str] = None
 
-def run_tasks(index_build_params: IndexBuildParameters) -> TaskResult:
+@profile
+def run_tasks(
+        index_build_params: IndexBuildParameters,
+        object_store_config: Dict[str, Any] = {},
+        run_options={}
+    ) -> TaskResult:
     with tempfile.TemporaryDirectory() as temp_dir, BytesIO() as vector_buffer, BytesIO() as doc_id_buffer:
         try:
             logger.info(f"Starting task execution for vector path: {index_build_params.vector_path}")
-            object_store_config = {}
+            remote_path = ""
+            index_local_path = ""
 
-            logger.info(f"Downloading vector and doc id blobs for vector path: {index_build_params.vector_path}")
-            vectors_dataset = create_vectors_dataset(
-                index_build_params=index_build_params,
-                object_store_config=object_store_config,
-                vector_bytes_buffer=vector_buffer,
-                doc_id_bytes_buffer=doc_id_buffer,
-            )
+            if run_options["download"]:
+                logger.info(f"Downloading vector and doc id blobs for vector path: {index_build_params.vector_path}")
+                vectors_dataset = create_vectors_dataset(
+                    index_build_params=index_build_params,
+                    object_store_config=object_store_config,
+                    vector_bytes_buffer=vector_buffer,
+                    doc_id_bytes_buffer=doc_id_buffer,
+                )
 
-            index_local_path = os.path.join(temp_dir, index_build_params.vector_path)
+            if run_options["build"]:
+                index_local_path = os.path.join(temp_dir, index_build_params.vector_path)
 
-            logger.info(f"Building GPU index for vector path: {index_build_params.vector_path}")
-            build_gpu_index(
-                index_build_params=index_build_params,
-                vectors_dataset=vectors_dataset,
-                cpu_index_output_file_path=index_local_path
-            )
+                logger.info(f"Building GPU index for vector path: {index_build_params.vector_path}")
+                build_gpu_index(
+                    index_build_params=index_build_params,
+                    vectors_dataset=vectors_dataset,
+                    cpu_index_output_file_path=index_local_path
+                )
+            elif run_options["upload"]:
+                index_local_path = run_options["local_path"]
 
-            logger.info(f"Uploading index for vector path: {index_build_params.vector_path}")
-            remote_path = upload_index(
-                index_build_params=index_build_params,
-                object_store_config=object_store_config,
-                index_local_path=index_local_path
-            )
+            if run_options["upload"] or run_options["build"]:
+                logger.info(f"Uploading index for vector path: {index_build_params.vector_path}")
+                remote_path = upload_index(
+                    index_build_params=index_build_params,
+                    object_store_config=object_store_config,
+                    index_local_path=index_local_path
+                )
 
             logger.info(f"Ending task execution for vector path: {index_build_params.vector_path}")
             return TaskResult(
@@ -74,7 +86,7 @@ def run_tasks(index_build_params: IndexBuildParameters) -> TaskResult:
             return TaskResult(
                 error=str(e)
             )
-
+@profile
 def build_gpu_index(
         index_build_params: IndexBuildParameters,
         vectors_dataset: VectorsDataset,
@@ -86,7 +98,7 @@ def build_gpu_index(
 
     create_index(vectors_dataset, indexingParams, index_build_params.index_parameters.space_type, cpu_index_output_file_path)
 
-
+@profile
 def create_vectors_dataset(
     index_build_params: IndexBuildParameters,
     object_store_config: Dict[str, Any],
@@ -149,7 +161,7 @@ def create_vectors_dataset(
         index_build_params.data_type,
     )
 
-
+@profile
 def upload_index(
     index_build_params: IndexBuildParameters,
     object_store_config: Dict[str, Any],

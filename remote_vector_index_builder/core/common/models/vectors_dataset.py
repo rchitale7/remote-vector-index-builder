@@ -11,7 +11,7 @@ from io import BytesIO
 import numpy as np
 from core.common.exceptions import UnsupportedVectorsDataTypeError, VectorsDatasetError
 from core.common.models.index_build_parameters import DataType
-
+from memory_profiler import profile
 
 @dataclass
 class VectorsDataset:
@@ -29,6 +29,7 @@ class VectorsDataset:
     vectors: np.ndarray
     doc_ids: np.ndarray
 
+    @profile
     def free_vectors_space(self):
         """Free up memory by deleting the vectors and document IDs arrays."""
         del self.vectors
@@ -69,6 +70,7 @@ class VectorsDataset:
             )
 
     @staticmethod
+    @profile
     def parse(
         vectors: BytesIO,
         doc_ids: BytesIO,
