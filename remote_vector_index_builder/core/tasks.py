@@ -47,6 +47,7 @@ def run_tasks(
             logger.info(f"Starting task execution for vector path: {index_build_params.vector_path}")
             remote_path = ""
             index_local_path = ""
+            vectors_dataset = None
 
             if run_options["download"]:
                 logger.info(f"Downloading vector and doc id blobs for vector path: {index_build_params.vector_path}")
@@ -71,11 +72,14 @@ def run_tasks(
 
             if run_options["upload"] or run_options["build"]:
                 logger.info(f"Uploading index for vector path: {index_build_params.vector_path}")
+                vectors_dataset.free_vectors_space()
                 remote_path = upload_index(
                     index_build_params=index_build_params,
                     object_store_config=object_store_config,
                     index_local_path=index_local_path
                 )
+            elif run_options["download"]:
+                vectors_dataset.free_vectors_space()
 
             logger.info(f"Ending task execution for vector path: {index_build_params.vector_path}")
             return TaskResult(

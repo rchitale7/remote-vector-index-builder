@@ -73,8 +73,7 @@ def create_index(vectorsDataset:VectorsDataset, indexingParams:dict, space_type:
     idMapIVFPQIndex.own_fields = True
     del cagraIVFPQIndex
     del idMapIVFPQIndex
-    # Let's free up the Vector dataset. We should free up the space to ensure that we can free up some RAM
-    vectorsDataset.free_vectors_space()
+    
     return {
         "indexTime": indexTime, "writeIndexTime": writeIndexTime, "totalTime": indexTime + writeIndexTime, "unit": "seconds",
         "gpu_to_cpu_index_conversion_time": writeIndexMetrics["gpu_to_cpu_index_conversion_time"] ,
