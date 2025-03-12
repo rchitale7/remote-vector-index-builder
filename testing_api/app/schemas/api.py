@@ -15,5 +15,5 @@ class CreateJobResponse(BaseModel):
 # TODO: move this core image
 class GetStatusResponse(BaseModel):
     task_status: str
-    file_path: Optional[str] = None
-    msg: Optional[str] = None
+    file_name: Optional[str] = None
+    error_message: Optional[str] = None

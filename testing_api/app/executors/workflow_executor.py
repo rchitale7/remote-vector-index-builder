@@ -64,8 +64,7 @@ class WorkflowExecutor:
                     workflow.job_id,
                     {
                         "status": status,
-                        "file_path": index_path,
-                        "msg": msg
+                        "file_name": index_path,
                     }
                 )
 
@@ -83,8 +82,7 @@ class WorkflowExecutor:
                 workflow.job.id,
                 {
                     "status": status,
-                    "file_path": index_path,
-                    "msg": str(e)
+                    "error_message": str(e)
                 }
             )
         finally:
