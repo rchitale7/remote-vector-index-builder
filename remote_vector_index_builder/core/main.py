@@ -37,6 +37,7 @@ def main():
     upload = os.environ.get("UPLOAD", False)
     local_path = os.environ.get("LOCAL_PATH", None)
     multipart_chunksizes = os.environ.get("MULTIPART_CHUNKSIZE", None)
+    thread_counts = os.environ.get("THREAD_COUNTS", None)
 
 
     run_options = {
@@ -58,6 +59,7 @@ def main():
     model = IndexBuildParameters.model_validate(index_build_params)
 
     chunks = multipart_chunksizes.split(",")
+    thread_counts = thread_counts.split(",")
 
     data = []
 
