@@ -21,10 +21,10 @@ def get_status(job_id: str, request: Request) -> GetStatusResponse:
         "task_status": job.status
     }
 
-    if hasattr(job, 'file_path')  and job.file_path is not None:
-        response_data["file_path"] = job.file_path
+    if hasattr(job, 'file_name')  and job.file_name is not None:
+        response_data["file_name"] = job.file_name
 
-    if hasattr(job, 'msg') and job.msg is not None:
-        response_data["msg"] = job.msg
+    if hasattr(job, 'error_message') and job.error_message is not None:
+        response_data["error_message"] = job.error_message
 
     return GetStatusResponse(**response_data)

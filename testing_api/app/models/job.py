@@ -18,8 +18,8 @@ class Job(BaseModel):
     id: str
     status: JobStatus
     request_parameters: RequestParameters
-    file_path: Optional[str] = None
-    msg: Optional[str] = None
+    file_name: Optional[str] = None
+    error_message: Optional[str] = None
 
     def compare_request_parameters(self, other: RequestParameters) -> bool:
         return self.request_parameters == other
