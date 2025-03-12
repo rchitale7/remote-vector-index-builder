@@ -36,16 +36,15 @@ class TaskResult:
     remote_path: Optional[str] = None
     error: Optional[str] = None
 
-@profile
 def run_tasks(
         index_build_params: IndexBuildParameters,
         object_store_config: Dict[str, Any] = {},
         run_options={}
     ) -> TaskResult:
+    remote_path = ""
     with tempfile.TemporaryDirectory() as temp_dir, BytesIO() as vector_buffer, BytesIO() as doc_id_buffer:
         try:
             logger.info(f"Starting task execution for vector path: {index_build_params.vector_path}")
-            remote_path = ""
             index_local_path = ""
             vectors_dataset = None
 
@@ -67,12 +66,12 @@ def run_tasks(
                     vectors_dataset=vectors_dataset,
                     cpu_index_output_file_path=index_local_path
                 )
+                vectors_dataset.free_vectors_space()
             elif run_options["upload"]:
                 index_local_path = run_options["local_path"]
 
             if run_options["upload"] or run_options["build"]:
                 logger.info(f"Uploading index for vector path: {index_build_params.vector_path}")
-                vectors_dataset.free_vectors_space()
                 remote_path = upload_index(
                     index_build_params=index_build_params,
                     object_store_config=object_store_config,
@@ -81,16 +80,17 @@ def run_tasks(
             elif run_options["download"]:
                 vectors_dataset.free_vectors_space()
 
-            logger.info(f"Ending task execution for vector path: {index_build_params.vector_path}")
-            return TaskResult(
-                remote_path=remote_path
-            )
         except Exception as e:
             logger.error(f"Error running tasks: {e}")
             return TaskResult(
                 error=str(e)
             )
-@profile
+
+    logger.info(f"Ending task execution for vector path: {index_build_params.vector_path}")
+    return TaskResult(
+        remote_path=remote_path
+    )
+
 def build_gpu_index(
         index_build_params: IndexBuildParameters,
         vectors_dataset: VectorsDataset,
@@ -102,7 +102,6 @@ def build_gpu_index(
 
     create_index(vectors_dataset, indexingParams, index_build_params.index_parameters.space_type, cpu_index_output_file_path)
 
-@profile
 def create_vectors_dataset(
     index_build_params: IndexBuildParameters,
     object_store_config: Dict[str, Any],
@@ -165,7 +164,6 @@ def create_vectors_dataset(
         index_build_params.data_type,
     )
 
-@profile
 def upload_index(
     index_build_params: IndexBuildParameters,
     object_store_config: Dict[str, Any],

@@ -5,6 +5,7 @@ import os
 
 from core.common.models.vectors_dataset import VectorsDataset
 import logging
+from memory_profiler import profile
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,7 @@ def create_index(vectorsDataset:VectorsDataset, indexingParams:dict, space_type:
     idMapIVFPQIndex.own_fields = True
     del cagraIVFPQIndex
     del idMapIVFPQIndex
-    
+
     return {
         "indexTime": indexTime, "writeIndexTime": writeIndexTime, "totalTime": indexTime + writeIndexTime, "unit": "seconds",
         "gpu_to_cpu_index_conversion_time": writeIndexMetrics["gpu_to_cpu_index_conversion_time"] ,

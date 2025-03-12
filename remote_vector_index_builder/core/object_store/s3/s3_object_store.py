@@ -12,6 +12,7 @@ from functools import cache
 from io import BytesIO
 from typing import Any, Dict
 from memory_profiler import profile
+import sys
 
 import boto3
 from boto3.s3.transfer import TransferConfig
@@ -64,7 +65,7 @@ class S3ObjectStore(ObjectStore):
         // 2,  # os.cpu_count can be None, according to mypy. If it is none, then default to 1 thread
         "multipart_threshold": 10 * 1024 * 1024,  # 10MB
         "use_threads": True,
-        "io_chunksize": 256 * 1024,  # 256KB
+        "io_chunksize": sys.maxsize,
         "num_download_attempts": 5,
         "max_io_queue": 100,
         "preferred_transfer_client": "auto",
@@ -155,7 +156,6 @@ class S3ObjectStore(ObjectStore):
 
         return config_params
 
-    @profile
     def read_blob(self, remote_store_path: str, bytes_buffer: BytesIO) -> None:
         """
         Downloads a blob from S3 to the provided bytes buffer, with retry logic.
@@ -210,7 +210,6 @@ class S3ObjectStore(ObjectStore):
         except ClientError as e:
             raise BlobError(f"Error downloading file: {e}") from e
 
-    @profile
     def write_blob(self, local_file_path: str, remote_store_path: str) -> None:
         """
         Uploads a local file to S3, with retry logic.

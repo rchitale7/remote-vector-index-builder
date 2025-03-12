@@ -29,7 +29,6 @@ class VectorsDataset:
     vectors: np.ndarray
     doc_ids: np.ndarray
 
-    @profile
     def free_vectors_space(self):
         """Free up memory by deleting the vectors and document IDs arrays."""
         del self.vectors
@@ -70,7 +69,6 @@ class VectorsDataset:
             )
 
     @staticmethod
-    @profile
     def parse(
         vectors: BytesIO,
         doc_ids: BytesIO,
