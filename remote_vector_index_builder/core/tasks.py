@@ -50,7 +50,8 @@ def run_tasks(index_build_params: IndexBuildParameters) -> TaskResult:
             )
 
             index_local_path = os.path.join(temp_dir, index_build_params.vector_path)
-            os.makedirs(index_local_path, exist_ok=True)
+            directory = os.path.dirname(index_local_path)
+            os.makedirs(directory, exist_ok=True)
 
             logger.info(f"Building GPU index for vector path: {index_build_params.vector_path}")
             build_gpu_index(
