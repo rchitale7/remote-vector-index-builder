@@ -35,11 +35,10 @@ class TaskResult:
     remote_path: Optional[str] = None
     error: Optional[str] = None
 
-def run_tasks(index_build_params: IndexBuildParameters) -> TaskResult:
+def run_tasks(index_build_params: IndexBuildParameters, object_store_config: Dict[str, Any] = {}) -> TaskResult:
     with tempfile.TemporaryDirectory() as temp_dir, BytesIO() as vector_buffer, BytesIO() as doc_id_buffer:
         try:
             logger.info(f"Starting task execution for vector path: {index_build_params.vector_path}")
-            object_store_config = {}
 
             logger.info(f"Downloading vector and doc id blobs for vector path: {index_build_params.vector_path}")
             vectors_dataset = create_vectors_dataset(
@@ -69,7 +68,7 @@ def run_tasks(index_build_params: IndexBuildParameters) -> TaskResult:
 
             logger.info(f"Ending task execution for vector path: {index_build_params.vector_path}")
             return TaskResult(
-                remote_path=remote_path
+                remote_path=os.path.basename(remote_path)
             )
         except Exception as e:
             logger.error(f"Error running tasks: {e}")

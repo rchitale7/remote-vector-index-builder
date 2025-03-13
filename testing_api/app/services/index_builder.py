@@ -9,6 +9,7 @@ import logging
 from typing import Optional, Tuple
 import tempfile
 import time
+import os
 from app.models.workflow import BuildWorkflow
 from core import run_tasks
 
@@ -24,10 +25,15 @@ class IndexBuilder:
         Builds the index for the given workflow.
         Returns (success, index_path, message).
         """
-        result = run_tasks(workflow.index_build_parameters)
+
+        integration_tests=os.environ.get("INTEGRATION_TESTS")
+        logger.info(f"Integration tests: {integration_tests}")
+        result = run_tasks(workflow.index_build_parameters, {
+            "integration_tests": integration_tests
+        })
         if not result.remote_path:
             logger.info("Failed to build index!")
             return False, None, result.error
         logger.info("Index built successfully!")
         logger.info(f"Index path: {result.remote_path}")
-        return True, result.remote_path, "success!"
+        return True, result.remote_path, None
