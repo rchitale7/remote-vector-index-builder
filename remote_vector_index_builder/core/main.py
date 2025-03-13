@@ -7,11 +7,14 @@
 
 from core.common.models.index_build_parameters import IndexBuildParameters
 import time
+from da
 from core import create_vectors_dataset, upload_index, run_tasks
 import logging
 from io import BytesIO
 import os
 import csv
+import numpy as np
+from datetime import datetime
 
 from core.object_store.s3.s3_object_store import S3ObjectStore
 logger = logging.getLogger(__name__)
@@ -58,35 +61,40 @@ def main():
 
     model = IndexBuildParameters.model_validate(index_build_params)
 
-    chunks = multipart_chunksizes.split(",")
-    thread_counts = thread_counts.split(",")
+    chunks = list(map(int, multipart_chunksizes.split(",")))
+    thread_counts = list(map(int, thread_counts.split(",")))
 
     data = []
 
-    for i in range(1,3):
+    for i in thread_counts:
         for chunk in chunks:
             object_store_config = {
                 "transfer_config": {
 
                 }
             }
-            mb_chunk = int(chunk) * 1024 * 1024
+            mb_chunk = chunk * 1024 * 1024
             object_store_config["transfer_config"]["multipart_chunksize"] = mb_chunk
             object_store_config["transfer_config"]["max_concurrency"] = i
-            t_time = 0
-            for j in range(0,5):
+            times = []
+            for j in range(0,10):
                 start_time = time.time()
                 run_tasks(model, object_store_config, run_options)
                 end_time = time.time()
-                t_time += end_time - start_time
-            avg_time = round((t_time / 5), 2)
+                times.append(end_time - start_time)
+            p50 = np.percentile(times, 50)
+            p90 = np.percentile(times, 90)
+            data_range = np.ptp(times)
+
             data.append(
-                [i, chunk, avg_time]
+                [i, chunk, p50, p90, data_range]
             )
             logging.info(f"ThreadCount: {i}, ChunkSize: {chunk}, TotalTime: {avg_time}")
     data = sorted(data, key=lambda x: x[-1])
-    data = [['ThreadCount', 'ChunkSize', 'TotalTime']] + data
-    local_path = os.path.join('/tmp', f'{knn_vec}_upload_output.csv')
+    data = [['ThreadCount', 'ChunkSize', 'P50', 'P99', 'Range']] + data
+
+    cur_time = f"{datetime.now()}".replace(" ", "_")
+    local_path = os.path.join('/tmp', f'{knn_vec}_{cur_time}_output.csv')
     with open(local_path, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerows(data)
