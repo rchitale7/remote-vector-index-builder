@@ -70,7 +70,7 @@ def run_tasks(
             elif run_options["upload"]:
                 index_local_path = run_options["local_path"]
 
-            if run_options["upload"] or run_options["build"]:
+            if run_options["upload"]:
                 logger.info(f"Uploading index for vector path: {index_build_params.vector_path}")
                 remote_path = upload_index(
                     index_build_params=index_build_params,
