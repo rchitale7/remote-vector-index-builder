@@ -22,21 +22,24 @@ from core.object_store.object_store import ObjectStore
 
 logger = logging.getLogger(__name__)
 
+LOCAL_STACK_ENDPOINT="http://host.docker.internal:4566"
 
 @cache
-def get_boto3_client(region: str, retries: int) -> boto3.client:
+def get_boto3_client(region: str, retries: int, integration_tests) -> boto3.client:
     """Create or retrieve a cached boto3 S3 client.
 
     Args:
         region (str): AWS region name for the S3 client
         retries (int): Maximum number of retry attempts for failed requests
+        integration_tests (bool): Determines if s3 local stack should be used, for integration tests
 
     Returns:
         boto3.client: Configured S3 client instance
     """
     config = Config(retries={"max_attempts": retries})
+    if integration_tests and integration_tests.lower() not in ('false', '0', 'f'):
+        return boto3.client("s3", config=config, region_name=region, endpoint_url=LOCAL_STACK_ENDPOINT)
     return boto3.client("s3", config=config, region_name=region)
-
 
 class S3ObjectStore(ObjectStore):
     """S3 implementation of the ObjectStore interface for managing vector data files.
@@ -91,13 +94,19 @@ class S3ObjectStore(ObjectStore):
                 - retries (int): Maximum number of retry attempts (default: 3)
                 - region (str): AWS region name (default: 'us-west-2')
                 - transfer_config (Dict[str, Any]): s3 TransferConfig parameters
+                - download_args (Dict[str, Any]): s3 ExtraArgs download specific parameters
+                - upload_args (Dict[str, Any]): s3 ExtraArgs upload specific parameters
                 - debug: Turns on debug mode (default: False)
         """
         self.bucket = index_build_params.container_name
         self.max_retries = object_store_config.get("retries", 3)
         self.region = object_store_config.get("region", "us-west-2")
 
-        self.s3_client = get_boto3_client(region=self.region, retries=self.max_retries)
+        self.s3_client = get_boto3_client(
+            region=self.region,
+            retries=self.max_retries,
+            integration_tests=object_store_config.get("integration_tests")
+        )
 
         transfer_config = object_store_config.get("transfer_config", {})
         # Create transfer config

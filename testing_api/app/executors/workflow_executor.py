@@ -65,7 +65,8 @@ class WorkflowExecutor:
                     workflow.job_id,
                     {
                         "status": status,
-                        "file_name": os.path.basename(index_path),
+                        "file_name": index_path,
+                        "error_message": msg
                     }
                 )
 
