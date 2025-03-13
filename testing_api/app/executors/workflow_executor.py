@@ -13,6 +13,7 @@ from app.base.resources import ResourceManager
 from app.base.exceptions import BuildError, ObjectStoreError
 from app.storage.base import RequestStore
 from app.models.job import JobStatus
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +65,7 @@ class WorkflowExecutor:
                     workflow.job_id,
                     {
                         "status": status,
-                        "file_name": index_path,
+                        "file_name": os.path.basename(index_path),
                     }
                 )
 
