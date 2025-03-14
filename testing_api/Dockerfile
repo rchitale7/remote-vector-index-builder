@@ -18,6 +18,8 @@ COPY . /testing_api
 ENV PYTHONPATH='${PYTHONPATH}:/tmp/faiss/build/faiss/python:/remote_vector_index_builder:/testing_api'
 
 ENV REQUEST_STORE_TYPE='memory'
+ENV REQUEST_STORE_MAX_SIZE=1000000
+ENV REQUEST_STORE_TTL_SECONDS=600
 
 ENV GPU_MEMORY_LIMIT=24
 ENV CPU_MEMORY_LIMIT=64
