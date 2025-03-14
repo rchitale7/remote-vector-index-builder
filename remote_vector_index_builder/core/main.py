@@ -14,6 +14,7 @@ import os
 import csv
 import numpy as np
 from datetime import datetime
+import sys
 
 from core.object_store.s3.s3_object_store import S3ObjectStore
 logger = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ def main(
     upload = os.environ.get("UPLOAD", False)
     multipart_chunksizes = os.environ.get("MULTIPART_CHUNKSIZE", None)
     thread_counts = os.environ.get("THREAD_COUNTS", None)
+    use_single_part = os.environ.get('SINGLE_PART', None)
 
 
     tag = ""
@@ -72,35 +74,63 @@ def main(
     data = []
     raw_data = []
 
-    for i in thread_counts:
-        for chunk in chunks:
-            object_store_config = {
-                "transfer_config": {
-
-                }
+    if use_single_part:
+        object_store_config = {
+            "transfer_config": {
+                "multipart_threshold": sys.maxsize
             }
-            mb_chunk = chunk * 1024 * 1024
-            object_store_config["transfer_config"]["multipart_chunksize"] = mb_chunk
-            object_store_config["transfer_config"]["max_concurrency"] = i
-            times = []
-            for j in range(0,10):
-                start_time = time.time()
-                run_tasks(model, object_store_config, run_options)
-                end_time = time.time()
-                times.append(end_time - start_time)
-            p50 = np.percentile(times, 50)
-            p90 = np.percentile(times, 90)
-            data_range = np.ptp(times)
+        }
+        times = []
+        for j in range(0, 5):
+            start_time = time.time()
+            run_tasks(model, object_store_config, run_options)
+            end_time = time.time()
+            times.append(end_time - start_time)
 
-            data.append(
-                [i, chunk, p50, p90, data_range]
-            )
+        np_mean = np.mean(times)
 
-            raw_data.append([i, chunk] + times)
+        data.append(
+            [np_mean]
+        )
 
-            logging.info(f"ThreadCount: {i}, ChunkSize: {chunk}, P50: {p50}, P90: {p90}, Range: {data_range}")
-    data = [['ThreadCount', 'ChunkSize', 'P50', 'P99', 'Range']] + data
-    raw_data = [['ThreadCount', 'ChunkSize', 'Run_1', 'Run_2', 'Run_3', 'Run_4', 'Run_5', 'Run_6', 'Run_7', 'Run_8', 'Run_9', 'Run_10']] + raw_data
+        raw_data.append(times)
+
+        logging.info(f"ThreadCount: 1, ChunkSize: Single, Mean: {np_mean}")
+    else:
+        for i in thread_counts:
+            for chunk in chunks:
+                object_store_config = {
+                    "transfer_config": {
+
+                    }
+                }
+                mb_chunk = chunk * 1024 * 1024
+                object_store_config["transfer_config"]["multipart_chunksize"] = mb_chunk
+                object_store_config["transfer_config"]["max_concurrency"] = i
+                times = []
+                for j in range(0,5):
+                    start_time = time.time()
+                    run_tasks(model, object_store_config, run_options)
+                    end_time = time.time()
+                    times.append(end_time - start_time)
+                p50 = np.percentile(times, 50)
+                p90 = np.percentile(times, 90)
+                data_range = np.ptp(times)
+
+                data.append(
+                    [i, chunk, p50, p90, data_range]
+                )
+
+                raw_data.append([i, chunk] + times)
+
+                logging.info(f"ThreadCount: {i}, ChunkSize: {chunk}, P50: {p50}, P90: {p90}, Range: {data_range}")
+
+    if use_single_part:
+        data = [['Avg']] + data
+        raw_data = [['Run_1', 'Run_2', 'Run_3', 'Run_4', 'Run_5']] + raw_data
+    else:
+        data = [['ThreadCount', 'ChunkSize', 'P50', 'P99', 'Range']] + data
+        raw_data = [['ThreadCount', 'ChunkSize', 'Run_1', 'Run_2', 'Run_3', 'Run_4', 'Run_5', 'Run_6', 'Run_7', 'Run_8', 'Run_9', 'Run_10']] + raw_data
 
     cur_time = f"{datetime.now()}".replace(" ", "_")
 
