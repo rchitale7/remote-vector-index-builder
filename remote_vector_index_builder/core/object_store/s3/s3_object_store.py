@@ -24,7 +24,7 @@ from core.object_store.object_store import ObjectStore
 
 logger = logging.getLogger(__name__)
 
-LOCAL_STACK_ENDPOINT="http://host.docker.internal:4566"
+LOCAL_STACK_ENDPOINT='http://172.17.0.1:4566'
 
 def get_cpus(factor: float) -> int:
     """Get the number of CPUs to use for s3 upload or download operation
