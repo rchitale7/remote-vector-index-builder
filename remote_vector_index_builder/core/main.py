@@ -41,6 +41,8 @@ def main(
     multipart_chunksizes = os.environ.get("MULTIPART_CHUNKSIZE", None)
     thread_counts = os.environ.get("THREAD_COUNTS", None)
     use_single_part = os.environ.get('SINGLE_PART', None)
+    s3_bucket = os.environ.get("S3_BUCKET", 'testbucket-rchital')
+    local_path = os.environ.get("LOCAL_PATH", "/home/rchital/files/")
 
 
     tag = ""
@@ -48,7 +50,7 @@ def main(
         "download": download,
         "build": build,
         "upload": upload,
-        "local_path": f"/home/rchital/files/{knn_vec}"
+        "local_path": local_path + knn_vec
     }
     if download:
         tag += "download"
@@ -59,7 +61,7 @@ def main(
 
     index_build_params = {
         "repository_type": "s3",
-        "container_name": "testbucket-rchital",
+        "container_name": s3_bucket,
         "vector_path": knn_vec,
         "doc_id_path": knn_did,
         "dimension": dimension,
