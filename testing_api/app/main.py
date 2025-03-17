@@ -6,7 +6,9 @@
 # compatible open source license.
 
 from app.api.routes import build, status
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from app.base.config import Settings
 from app.base.resources import ResourceManager
@@ -16,6 +18,8 @@ from app.services.job_service import JobService
 from app.storage.factory import RequestStoreFactory
 from app.utils.logging_config import configure_logging
 from contextlib import asynccontextmanager
+
+from app.utils.error_message import get_field_path
 
 import logging
 
@@ -63,6 +67,26 @@ async def lifespan(app: FastAPI):
     yield
     logger.info("Shutting down application ...")
     workflow_executor.shutdown()
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = []
+    for error in exc.errors():
+        field_path = get_field_path(error["loc"])
+        errors.append({
+            "field": field_path,
+            "message": error["msg"],
+            "type": error["type"]
+        })
+
+    logger.info(f"Error while validating parameters: #{errors}")
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": "Validation Error",
+            "errors": errors
+        }
+    )
 
 app.include_router(build.router)
 app.include_router(status.router)
