@@ -7,7 +7,7 @@
 def test_imports():
     try:
         from app import main
-        from core import run_tasks
+        from core.tasks import run_tasks
         import numpy
         import faiss
 

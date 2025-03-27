@@ -8,7 +8,7 @@
 import logging
 from typing import Optional, Tuple
 from app.models.workflow import BuildWorkflow
-from core import run_tasks
+from core.tasks import run_tasks
 
 logger = logging.getLogger(__name__)
 
