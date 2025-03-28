@@ -10,3 +10,4 @@ COPY ./remote_vector_index_builder/core /remote_vector_index_builder/core
 
 ENV PYTHONPATH='${PYTHONPATH}:/tmp/faiss/build/faiss/python:/remote_vector_index_builder'
 RUN ["python", "core/test_imports.py"]
+CMD ["python", "core/main.py"]
