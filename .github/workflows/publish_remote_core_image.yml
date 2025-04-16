@@ -55,6 +55,7 @@ jobs:
         run: |
           docker logout
   build-and-publish-api-image:
+    needs: build-and-publish-core-image
     uses: ./.github/workflows/publish_remote_api_image.yml
     secrets:
       REMOTE_VECTOR_DOCKER_ROLE: ${{ secrets.REMOTE_VECTOR_DOCKER_ROLE }}
