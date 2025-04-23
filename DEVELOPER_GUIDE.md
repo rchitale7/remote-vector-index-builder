@@ -155,13 +155,8 @@ The API image implements the [Remote Vector Service API Contract](/API.md). It p
 that directly integrate with the OpenSearch k-NN Remote Vector Service Client. The default image
 configuration allows it to be used to run integration tests for the OpenSearch k-NN Remote Vector component.
 This configuration maintains the job state in an in-memory dictionary with a TTL, and uses a fixed size
-thread pool to execute index build workflows. 
-
-
-The dictionary size and TTL is controllable via the Docker container settings. For example, you can set the TTL
-to `None`, to ensure requests never get deleted. You are also free to implement a separate, custom API image, 
-as long as it conforms to the Remote Vector Service API Contract and provides endpoints for the Remote Vector Service Client. 
-This custom API image can still use the `core` image libraries to execute the index build workflow.
+thread pool to execute index build workflows. But, the dictionary size and TTL is also controllable via the Docker container settings. For example, you can set the TTL
+to `None`, to ensure requests never get deleted.
 
 Follow the steps below to use run the API image locally. Note that s3 is currently the only supported Remote Store repository
 1. [Provision an instance for development](#provisioning-an-instance-for-development)

@@ -79,7 +79,10 @@ in the same root remote store path as the `vector_path`.
 
 ### Authentication
 
-If authentication is configured, the endpoint must support Basic Authentication. The server is expected to return a 401 Unauthorized status code if authentication is enabled and credentials are missing/incorrect. If there is no authentication configured, the server will process requests with no Authentication header.
+The Remote Vector Service endpoint can be configured with Basic Authentication. If authentication is configured and the credentials are missing/incorrect, the Remote Vector Service is expected to return a 401 Unauthorized status code. 
+If authentication is not configured, the Remote Vector Service will ignore the HTTP Authorization header. 
+
+Please note that the [default](/remote_vector_index_builder/app/) Remote Vector Service API Docker image does not support Basic Authentication configuration, so it will always ignore the HTTP Authorization header. 
 
 * * *
 
