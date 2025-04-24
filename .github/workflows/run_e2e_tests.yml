@@ -1,0 +1,83 @@
+name: Run Remote-Vector-Index-Builder E2E Core Test Image
+
+on:
+  push:
+    paths:  # Note this is done for folder specific checkouts, reduce CI memory load
+      - 'remote_vector_index_builder/**'
+      - 'test_remote_vector_index_builder/**'
+      - 'base_image/**'
+      - 'e2e/**'
+      - '.github/workflows/run_e2e_tests.yml'
+  pull_request:
+    branches:
+      - "*"
+      - "feature/**"
+    paths:
+      - 'e2e/**'
+      - '.github/workflows/run_e2e_tests.yml'
+      - 'remote_vector_index_builder/**'
+      - 'test_remote_vector_index_builder/**'
+      - 'base_image/**'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  run-e2e-core-test-image:
+    name: Run Remote-Vector-Index-Builder E2E Core Test Image
+    if: github.repository == 'opensearch-project/remote-vector-index-builder'
+    runs-on:
+      group: selfhosted-gpu-runners
+      labels: g6xlarge
+    timeout-minutes: 60  # Job level timeout
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run : |
+          docker build --pull  -f ./e2e/test_core/Dockerfile . -t remote-vector-index-builder:e2e-latest
+      
+      - name: Run E2E Tests
+        id: e2e_tests
+        timeout-minutes: 20  # E2E test timeout
+        run : |
+            set -o pipefail
+            # Add timeout to docker-compose
+            timeout 1200 docker compose -f ./e2e/test_core/docker-compose.yml up --exit-code-from remote-vector-index-builder 2>&1 | tee test_output.log
+            exit_code=$?
+            if [ $exit_code -eq 124 ]; then
+                echo "Test timed out after 20 minutes"
+                exit 1
+            fi
+            echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+            exit $exit_code
+      - name: Docker-Compose cleanup
+        if: always()
+        run : |
+            docker compose -f ./e2e/test_core/docker-compose.yml -v down
+
+      - name: Runner Cleanups
+        if: always()
+        run : | 
+          docker container prune -f
+          docker volume prune -af
+          docker network prune -f
+          docker rmi $(docker images -f "dangling=true" -q) || echo clean
+
+          rm -rf ${{ github.workspace }}/*
+          
+          docker image list
+          docker volume list
+          docker network list
+          docker ps -a
+
+      - name: Check Test Results
+        if: always()
+        run: |
+            if [ "${{ steps.e2e_tests.outputs.exit_code }}" != "0" ]; then
+              echo "E2E tests failed with exit code ${{ steps.e2e_tests.outputs.exit_code }}"
+              exit 1
+            fi
