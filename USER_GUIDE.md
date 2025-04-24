@@ -30,3 +30,8 @@ If another Docker process is already running on this port, you may get an error 
 After successfully running the previous command, the remote build service will be available at the instance's public IP address on port 80 (or whichever port was chosen previously).
 
 For information on configuring OpenSearch to use this service, please refer to the [OpenSearch k-NN documentation.](https://docs.opensearch.org/docs/latest/vector-search/)
+
+## Additional Information
+
+You are free to implement a different API server, as long as it conforms to the [Remote Vector Service API Contract](/API.md).
+This custom API image can still use the `core` image libraries to execute the index build workflow.
