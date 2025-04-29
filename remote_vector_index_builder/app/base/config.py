@@ -8,6 +8,7 @@
 from pydantic_settings import BaseSettings
 from app.storage.types import RequestStoreType
 from typing import Optional
+import os
 
 
 class Settings(BaseSettings):
@@ -32,4 +33,4 @@ class Settings(BaseSettings):
 
     # Service settings
     service_name: str = "remote-vector-index-builder-api"
-    log_level: str = "INFO"
+    log_level: str = os.environ.get("LOG_LEVEL", "INFO")
