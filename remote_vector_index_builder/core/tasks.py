@@ -109,7 +109,7 @@ def run_tasks(
             )
             t2 = timer()
             download_time = t2 - t1
-            logging.debug(f"Vector download time for vector path {index_build_params.vector_path}: {download_time:.2f} seconds")
+            logging.info(f"Vector download time for vector path {index_build_params.vector_path}: {download_time:.2f} seconds")
 
             index_local_path = os.path.join(temp_dir, index_build_params.vector_path)
             directory = os.path.dirname(index_local_path)
@@ -127,7 +127,7 @@ def run_tasks(
             )
             t2 = timer()
             build_time = t2 - t1
-            logging.debug(f"Total index build time for path {index_build_params.vector_path}: {build_time:.2f} seconds")
+            logging.info(f"Total index build time for path {index_build_params.vector_path}: {build_time:.2f} seconds")
 
             vectors_dataset.free_vectors_space()
 
@@ -143,7 +143,7 @@ def run_tasks(
             )
             t2 = timer()
             upload_time = t2 - t1
-            logging.debug(f"Total upload time for path {index_build_params.vector_path}: {upload_time:.2f} seconds")
+            logging.info(f"Total upload time for path {index_build_params.vector_path}: {upload_time:.2f} seconds")
 
             os.remove(index_local_path)
 

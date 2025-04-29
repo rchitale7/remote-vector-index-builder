@@ -84,7 +84,7 @@ class FaissIndexBuildService(IndexBuildService):
             )
             t2 = timer()
             index_build_time = t2 - t1
-            logging.debug(f"Index build time: {index_build_time:.2f} seconds")
+            logging.info(f"Index build time: {index_build_time:.2f} seconds")
 
 
             # Step 2a: Create a structured CPUIndexConfig having defaults,
@@ -108,7 +108,7 @@ class FaissIndexBuildService(IndexBuildService):
             )
             t2 = timer()
             index_conversion_time = t2 - t1
-            logging.debug(f"Index conversion time: {index_conversion_time:.2f} seconds")
+            logging.info(f"Index conversion time: {index_conversion_time:.2f} seconds")
 
             # Step 3: Write CPU Index to persistent storage
             t1 = timer()
@@ -117,7 +117,7 @@ class FaissIndexBuildService(IndexBuildService):
             )
             t2 = timer()
             index_write_time = t2 - t1
-            logging.debug(f"Index write time: {index_write_time:.2f} seconds")
+            logging.info(f"Index write time: {index_write_time:.2f} seconds")
 
         except Exception as exception:
             # Clean up GPU Index Response if orchestrator failed after GPU Index Creation
