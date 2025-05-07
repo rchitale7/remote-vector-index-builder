@@ -22,14 +22,14 @@ class Settings(BaseSettings):
 
     # In memory settings
     request_store_max_size: int = 1000000
-    request_store_ttl_seconds: Optional[int] = 600
+    request_store_ttl_seconds: Optional[int] = 1800
 
     # Resource Manager settings, in bytes
     gpu_memory_limit: float = 24.0 * 10**9
     cpu_memory_limit: float = 32.0 * 10**9
 
     # Workflow Executor settings
-    max_workers: int = 5
+    max_workers: int = 2
 
     # Service settings
     service_name: str = "remote-vector-index-builder-api"
