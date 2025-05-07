@@ -89,6 +89,8 @@ class WorkflowExecutor:
         resources_allocated = False
         try:
             logger.info(f"Starting execution of job {workflow.job_id}")
+            # sleep to give other waiting jobs the chance to allocate resources
+            time.sleep(5)
 
             while not self._resource_manager.allocate(
                 workflow.gpu_memory_required, workflow.cpu_memory_required
@@ -98,10 +100,7 @@ class WorkflowExecutor:
                     logger.info(f"Job {workflow.job_id} was deleted before execution")
                     return
 
-                logger.info(
-                    f"Waiting for resources to be available for job {workflow.job_id}"
-                )
-                time.sleep(5)
+                time.sleep(1)
 
             logger.info(
                 f"Worker resource status after allocating memory for job id {workflow.job_id}: - "
