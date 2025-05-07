@@ -119,7 +119,7 @@ class FaissGPUIndexCagraBuilder(FaissGPUIndexBuilder):
         gpu_index_cagra_config.build_algo = self._configure_build_algo()
 
         if self.graph_build_algo == CagraGraphBuildAlgo.IVF_PQ:
-            gpu_index_cagra_config.ivf_pq_build_params = (
+            gpu_index_cagra_config.ivf_pq_params = (
                 self.ivf_pq_build_config.to_faiss_config()
             )
             gpu_index_cagra_config.ivf_pq_search_params = (

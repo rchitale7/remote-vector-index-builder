@@ -22,7 +22,7 @@ class IVFPQBuildCagraConfig:
     # The number of iterations searching for kmeans centers (index building).
     kmeans_n_iters: int = 20
     # The fraction of data to use during iterative kmeans building.
-    kmeans_trainset_fraction: float = 0.5
+    kmeans_trainset_fraction: float = 0.1
 
     # The bit length of the vector element after compression by PQ.
     # Possible values: [4, 5, 6, 7, 8].
