@@ -5,7 +5,7 @@
 # this file be licensed under the Apache-2.0 license or a
 # compatible open source license.
 
-FROM rchitale7/remote-index-build-service:core-prod
+FROM rchitale7/remote-index-build-service:core-prod-disk
 
 WORKDIR /remote_vector_index_builder
 
