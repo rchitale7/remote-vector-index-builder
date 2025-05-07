@@ -6,20 +6,21 @@
 # compatible open source license.
 
 
-from core.common.models import IndexBuildParameters
-from core.common.models.index_build_parameters import DataType
-from core.object_store.types import ObjectStoreType
-from e2e.test_core.utils.logging_config import configure_logger
-from e2e.test_core.vector_dataset_generator import VectorDatasetGenerator
-from botocore.exceptions import ClientError
-from core.tasks import run_tasks
-import os
 import logging
 import time
 import sys
+import os
+from botocore.exceptions import ClientError
+from core.common.models.index_build_parameters import DataType, Engine
+from core.object_store.types import ObjectStoreType
+from e2e.api.remote_vector_api_client import RemoteVectorAPIClient
+from e2e.api.utils.logging_config import configure_logger
+from e2e.api.vector_dataset_generator import VectorDatasetGenerator
+
+from app.models.job import JobStatus
 
 
-def run_e2e_index_builder(config_path: str = "test_core/test-datasets.yml"):
+def run_e2e_index_builder(config_path: str = "api/test-datasets.yml"):
 
     logger = logging.getLogger(__name__)
     dataset_generator = VectorDatasetGenerator(config_path)
@@ -46,37 +47,52 @@ def run_e2e_index_builder(config_path: str = "test_core/test-datasets.yml"):
                 dataset_config = dataset_generator.config["datasets"][dataset_name]
                 s3_config = dataset_generator.config["storage"]["s3"]
 
-                index_build_params = IndexBuildParameters(
-                    vector_path=s3_config["paths"]["vectors"].format(
+                index_build_params = {
+                    "vector_path": s3_config["paths"]["vectors"].format(
                         dataset_name=dataset_name
                     ),
-                    doc_id_path=s3_config["paths"]["doc_ids"].format(
+                    "doc_id_path": s3_config["paths"]["doc_ids"].format(
                         dataset_name=dataset_name
                     ),
-                    container_name=bucket,
-                    dimension=dataset_config["dimension"],
-                    doc_count=dataset_config["num_vectors"],
-                    data_type=DataType.FLOAT,
-                    repository_type=ObjectStoreType.S3,
-                )
-                logger.info("\nRunning vector index builder workflow...")
-                object_store_config = {
-                    "retries": s3_config["retries"],
-                    "region": s3_config["region"],
-                    "S3_ENDPOINT_URL": os.environ.get(
-                        "S3_ENDPOINT_URL", "http://localhost:4566"
-                    ),
+                    "container_name": bucket,
+                    "dimension": dataset_config["dimension"],
+                    "doc_count": dataset_config["num_vectors"],
+                    "data_type": DataType.FLOAT,
+                    "repository_type": ObjectStoreType.S3,
+                    "engine": Engine.FAISS,
                 }
+
+                logger.info("\nRunning vector index builder workflow...")
+
+                client = RemoteVectorAPIClient(http_request_timeout=30)
+
                 start_time = time.time()
-                result = run_tasks(
-                    index_build_params=index_build_params,
-                    object_store_config=object_store_config,
+                # Submit job
+                job_id = client.build_index(index_build_params)
+                logger.info(f"Created job: {job_id}")
+
+                # Wait for completion (20 minute timeout)
+                result = client.wait_for_job_completion(
+                    job_id,
+                    status_request_timeout=1200,  # 20 minutes
+                    interval=10,  # Check every 10 seconds
                 )
                 run_tasks_total_time = time.time() - start_time
 
-                if result.error:
-                    logger.error(f"Error in workflow: {result.error}")
-                    raise RuntimeError(f"Test failed for dataset {dataset_name}: {result.error}")
+                if result.task_status != JobStatus.COMPLETED:
+                    logger.error(f"Error in workflow: {result.error_message}")
+                    raise RuntimeError(f"Job failed: {result.error_message}")
+
+                vector_dataset_name = ".".join(
+                    os.path.basename(index_build_params["vector_path"]).split(".")[0:-1]
+                )
+                index_file_name = (
+                    vector_dataset_name + "." + index_build_params["engine"]
+                )
+                if result.file_name != index_file_name:
+                    error_msg = f"Error in workflow: Vector file upload path mismatch, expected:{index_file_name}, got: {result.file_name}"
+                    logger.error(error_msg)
+                    raise RuntimeError(f"Job Failed: {error_msg}")
 
                 logger.info(f"Successfully processed dataset: {dataset_name}")
                 metrics = {
@@ -111,4 +127,4 @@ def run_e2e_index_builder(config_path: str = "test_core/test-datasets.yml"):
 
 if __name__ == "__main__":
     configure_logger()
-    run_e2e_index_builder("test_core/test-datasets.yml")
+    run_e2e_index_builder("api/test-datasets.yml")
