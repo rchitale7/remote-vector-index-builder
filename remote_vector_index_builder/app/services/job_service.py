@@ -181,10 +181,6 @@ class JobService:
         logger.info(
             f"Job id requirements: GPU memory: {gpu_mem}, CPU memory: {cpu_mem}"
         )
-        logger.info(
-            f"Total memory available: GPU: {self.total_gpu_memory},"
-            f" CPU: {self.total_cpu_memory}"
-        )
 
         workflow = self._create_workflow(
             job_id, gpu_mem, cpu_mem, index_build_parameters
