@@ -78,17 +78,23 @@ def run_e2e_index_builder(config_path: str = "api/test-datasets.yml"):
             run_tasks_total_time = time.time() - start_time
 
             if result.task_status != JobStatus.COMPLETED:
-                logger.error(f"Error in workflow for {dataset_name}: {result.error_message}")
-                raise RuntimeError(f"Job failed for {dataset_name}: {result.error_message}")
+                logger.error(
+                    f"Error in workflow for {dataset_name}: {result.error_message}"
+                )
+                raise RuntimeError(
+                    f"Job failed for {dataset_name}: {result.error_message}"
+                )
 
             vector_dataset_name = ".".join(
                 os.path.basename(index_build_params["vector_path"]).split(".")[0:-1]
             )
-            index_file_name = (
-                    vector_dataset_name + "." + index_build_params["engine"]
-            )
+            index_file_name = vector_dataset_name + "." + index_build_params["engine"]
             if result.file_name != index_file_name:
-                error_msg = f"Error in workflow for {dataset_name}: Vector file upload path mismatch, expected:{index_file_name}, got: {result.file_name}"
+                error_msg = (
+                    f"Error in workflow for {dataset_name}: "
+                    f"Vector file upload path mismatch, "
+                    f"expected:{index_file_name}, got: {result.file_name}"
+                )
                 logger.error(error_msg)
                 raise RuntimeError(f"Job Failed for {dataset_name}: {error_msg}")
 
@@ -104,7 +110,6 @@ def run_e2e_index_builder(config_path: str = "api/test-datasets.yml"):
             return dataset_name, False, str(e)
 
     bucket = None
-    s3_client = None
     client = RemoteVectorAPIClient(http_request_timeout=30)
     try:
         # Create test bucket if it doesn't exist
@@ -140,7 +145,9 @@ def run_e2e_index_builder(config_path: str = "api/test-datasets.yml"):
                         logger.error(f"Dataset {ds_name} failed: {result}")
                 except Exception as e:
                     all_succeeded = False
-                    logger.exception(f"Exception processing dataset {dataset_name}: {str(e)}")
+                    logger.exception(
+                        f"Exception processing dataset {dataset_name}: {str(e)}"
+                    )
 
         total_execution_time = time.time() - total_start_time
         logger.info(f"Total parallel execution time: {total_execution_time:.2f}s")
@@ -152,7 +159,7 @@ def run_e2e_index_builder(config_path: str = "api/test-datasets.yml"):
             logger.error("Error in workflow: Not all jobs found")
             raise RuntimeError("Not all jobs found")
 
-        logger.info(f"All datasets processed successfully.")
+        logger.info("All datasets processed successfully.")
 
     except Exception as e:
         logger.error(f"E2E test failed: {str(e)}")
