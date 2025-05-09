@@ -7,6 +7,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
+import json
 import logging
 import time
 import sys
@@ -55,12 +56,18 @@ def run_e2e_index_builder(config_path: str = "api/test-datasets.yml"):
 
             logger.info(f"Running vector index builder workflow for {dataset_name}...")
 
-            client = RemoteVectorAPIClient(http_request_timeout=30)
+            client.heart_beat()
 
             start_time = time.time()
             # Submit job
             job_id = client.build_index(index_build_params)
             logger.info(f"Created job: {job_id} for dataset: {dataset_name}")
+
+            jobs = json.loads(client.get_jobs())
+            logger.info(f"Jobs: {jobs}")
+            if job_id not in jobs:
+                logger.error(f"Error in workflow: Job {job_id} not found")
+                raise RuntimeError("Job not found")
 
             # Wait for completion (20 minute timeout)
             result = client.wait_for_job_completion(
@@ -98,6 +105,7 @@ def run_e2e_index_builder(config_path: str = "api/test-datasets.yml"):
 
     bucket = None
     s3_client = None
+    client = RemoteVectorAPIClient(http_request_timeout=30)
     try:
         # Create test bucket if it doesn't exist
         s3_client = dataset_generator.object_store.s3_client
@@ -139,6 +147,10 @@ def run_e2e_index_builder(config_path: str = "api/test-datasets.yml"):
 
         if not all_succeeded:
             raise RuntimeError("One or more datasets failed to process.")
+        jobs = json.loads(client.get_jobs())
+        if len(jobs) != len(dataset_generator.config["datasets"]):
+            logger.error("Error in workflow: Not all jobs found")
+            raise RuntimeError("Not all jobs found")
 
         logger.info(f"All datasets processed successfully.")
 
