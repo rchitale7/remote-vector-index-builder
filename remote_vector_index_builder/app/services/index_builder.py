@@ -36,16 +36,15 @@ class IndexBuilder:
                 - Error message if failed, None otherwise
         """
         s3_endpoint_url = os.environ.get("S3_ENDPOINT_URL", None)
-        # upload_io_chunksize = int(os.environ.get("UPLOAD_IO_CHUNKSIZE", sys.maxsize))
-        upload_max_concurrency = int(os.environ.get("UPLOAD_MAX_CONCURRENCY", 2))
+        upload_max_concurrency = int(os.environ.get("UPLOAD_MAX_CONCURRENCY", 4))
         upload_multipart_threshold = int(
             os.environ.get("UPLOAD_MULTIPART_THRESHOLD", 50 * 1024 * 1024)
         )
 
-        download_max_concurrency = int(os.environ.get("UPLOAD_MAX_CONCURRENCY", 2))
-        download_multipart_threshold = int(
-            os.environ.get("UPLOAD_MULTIPART_THRESHOLD", 50 * 1024 * 1024)
-        )
+        # download_max_concurrency = int(os.environ.get("DOWNLOAD_MAX_CONCURRENCY", 5))
+        # download_multipart_threshold = int(
+        #     os.environ.get("DOWNLOAD_MULTIPART_THRESHOLD", 50 * 1024 * 1024)
+        # )
 
         upload_transfer_config = {
             "multipart_threshold": upload_multipart_threshold,
@@ -53,18 +52,17 @@ class IndexBuilder:
             "max_concurrency": upload_max_concurrency
         }
 
-        download_transfer_config = {
-            "multipart_threshold": download_multipart_threshold,
-            "multipart_chunksize": download_multipart_threshold,
-            "max_concurrency": download_max_concurrency
-        }
+        # download_transfer_config = {
+        #     "multipart_threshold": download_multipart_threshold,
+        #     "multipart_chunksize": download_multipart_threshold,
+        #     "max_concurrency": download_max_concurrency
+        # }
 
 
         result = run_tasks(
             workflow.index_build_parameters, {
                 "S3_ENDPOINT_URL": s3_endpoint_url,
-                "upload_transfer_config": upload_transfer_config,
-                
+                "upload_transfer_config": upload_transfer_config
             }
         )
         if not result.file_name:
