@@ -12,7 +12,6 @@ from app.models.workflow import BuildWorkflow
 from app.base.resources import ResourceManager
 from app.storage.base import RequestStore
 from app.models.job import JobStatus
-import time
 
 logger = logging.getLogger(__name__)
 
@@ -86,28 +85,25 @@ class WorkflowExecutor:
         Note:
             This method is intended to be run in a separate thread.
         """
-        resources_allocated = False
+
+        if not self._resource_manager.allocate(
+            workflow.gpu_memory_required, workflow.cpu_memory_required
+        ):
+            self._request_store.update(
+                workflow.job_id,
+                {"status": JobStatus.FAILED, "error_message": "Worker has no memory"},
+            )
+            return
+
+        logger.info(
+            f"Worker resource status after allocating memory for job id {workflow.job_id}: - "
+            f"GPU: {self._resource_manager.get_available_gpu_memory():,} bytes, "
+            f"CPU: {self._resource_manager.get_available_cpu_memory():,} bytes"
+        )
+
         try:
             logger.info(f"Starting execution of job {workflow.job_id}")
-            # sleep to give other waiting job threads the chance to allocate resources
-            time.sleep(2)
 
-            while not self._resource_manager.allocate(
-                workflow.gpu_memory_required, workflow.cpu_memory_required
-            ):
-                # Job may have been deleted by request store TTL
-                if not self._request_store.get(workflow.job_id):
-                    logger.info(f"Job {workflow.job_id} was deleted before execution")
-                    return
-
-                time.sleep(0.1)
-
-            logger.info(
-                f"Worker resource status after allocating memory for job id {workflow.job_id}: - "
-                f"GPU: {self._resource_manager.get_available_gpu_memory():,} bytes, "
-                f"CPU: {self._resource_manager.get_available_cpu_memory():,} bytes"
-            )
-            resources_allocated = True
             success, index_path, msg = self._build_index_fn(workflow)
 
             # Job may have been deleted by request store TTL, so we need to check if job
@@ -135,11 +131,9 @@ class WorkflowExecutor:
                 {"status": JobStatus.FAILED, "error_message": str(e)},
             )
         finally:
-            # Release resources
-            if resources_allocated:
-                self._resource_manager.release(
-                    workflow.gpu_memory_required, workflow.cpu_memory_required
-                )
+            self._resource_manager.release(
+                workflow.gpu_memory_required, workflow.cpu_memory_required
+            )
 
     def shutdown(self) -> None:
         """

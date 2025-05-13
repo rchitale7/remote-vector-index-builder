@@ -23,9 +23,7 @@ class Settings(BaseSettings):
     )
 
     # In memory settings
-    request_store_max_size: int = int(
-        os.environ.get("REQUEST_STORE_MAX_SIZE", "1000000")
-    )
+    request_store_max_size: int = int(os.environ.get("REQUEST_STORE_MAX_SIZE", "10000"))
     request_store_ttl_seconds: Optional[int] = int(
         os.environ.get("REQUEST_STORE_TTL_SECONDS", "1800")
     )

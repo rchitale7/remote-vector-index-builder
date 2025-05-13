@@ -85,28 +85,27 @@ def test_successful_workflow_execution(
     mock_build_index_fn,
 ):
     """Test successful execution of a workflow"""
-    with patch("time.sleep"):
-        mock_build_index_fn.return_value = (True, "/path/to/index", None)
+    mock_build_index_fn.return_value = (True, "/path/to/index", None)
 
-        mock_resource_manager.allocate.return_value = True
+    mock_resource_manager.allocate.return_value = True
 
-        workflow_executor.submit_workflow(sample_workflow_1)
-        workflow_executor._executor.shutdown(wait=True)
+    workflow_executor.submit_workflow(sample_workflow_1)
+    workflow_executor._executor.shutdown(wait=True)
 
-        mock_build_index_fn.assert_called_once_with(sample_workflow_1)
+    mock_build_index_fn.assert_called_once_with(sample_workflow_1)
 
-        mock_request_store.update.assert_called_with(
-            sample_workflow_1.job_id,
-            {
-                "status": JobStatus.COMPLETED,
-                "file_name": "/path/to/index",
-                "error_message": None,
-            },
-        )
+    mock_request_store.update.assert_called_with(
+        sample_workflow_1.job_id,
+        {
+            "status": JobStatus.COMPLETED,
+            "file_name": "/path/to/index",
+            "error_message": None,
+        },
+    )
 
-        mock_resource_manager.release.assert_called_with(
-            sample_workflow_1.gpu_memory_required, sample_workflow_1.cpu_memory_required
-        )
+    mock_resource_manager.release.assert_called_with(
+        sample_workflow_1.gpu_memory_required, sample_workflow_1.cpu_memory_required
+    )
 
 
 def test_failed_workflow_execution(
@@ -117,29 +116,28 @@ def test_failed_workflow_execution(
     mock_build_index_fn,
 ):
     """Test workflow execution with failure"""
-    with patch("time.sleep"):
-        error_message = "Build failed"
-        mock_build_index_fn.return_value = (False, None, error_message)
+    error_message = "Build failed"
+    mock_build_index_fn.return_value = (False, None, error_message)
 
-        mock_resource_manager.allocate.return_value = True
+    mock_resource_manager.allocate.return_value = True
 
-        workflow_executor.submit_workflow(sample_workflow_1)
-        workflow_executor._executor.shutdown(wait=True)
+    workflow_executor.submit_workflow(sample_workflow_1)
+    workflow_executor._executor.shutdown(wait=True)
 
-        mock_build_index_fn.assert_called_once_with(sample_workflow_1)
+    mock_build_index_fn.assert_called_once_with(sample_workflow_1)
 
-        mock_request_store.update.assert_called_with(
-            sample_workflow_1.job_id,
-            {
-                "status": JobStatus.FAILED,
-                "file_name": None,
-                "error_message": error_message,
-            },
-        )
+    mock_request_store.update.assert_called_with(
+        sample_workflow_1.job_id,
+        {
+            "status": JobStatus.FAILED,
+            "file_name": None,
+            "error_message": error_message,
+        },
+    )
 
-        mock_resource_manager.release.assert_called_with(
-            sample_workflow_1.gpu_memory_required, sample_workflow_1.cpu_memory_required
-        )
+    mock_resource_manager.release.assert_called_with(
+        sample_workflow_1.gpu_memory_required, sample_workflow_1.cpu_memory_required
+    )
 
 
 def test_deleted_job_during_execution(
@@ -151,20 +149,19 @@ def test_deleted_job_during_execution(
 ):
     """Test handling of job that was deleted during execution"""
 
-    with patch("time.sleep"):
-        mock_resource_manager.allocate.return_value = True
-        mock_request_store.get.return_value = False
+    mock_resource_manager.allocate.return_value = True
+    mock_request_store.get.return_value = False
 
-        workflow_executor.submit_workflow(sample_workflow_1)
-        workflow_executor._executor.shutdown(wait=True)
+    workflow_executor.submit_workflow(sample_workflow_1)
+    workflow_executor._executor.shutdown(wait=True)
 
-        mock_build_index_fn.assert_called_once()
-        mock_request_store.update.assert_not_called()
+    mock_build_index_fn.assert_called_once()
+    mock_request_store.update.assert_not_called()
 
-        mock_build_index_fn.assert_called_once()
-        mock_resource_manager.release.assert_called_with(
-            sample_workflow_1.gpu_memory_required, sample_workflow_1.cpu_memory_required
-        )
+    mock_build_index_fn.assert_called_once()
+    mock_resource_manager.release.assert_called_with(
+        sample_workflow_1.gpu_memory_required, sample_workflow_1.cpu_memory_required
+    )
 
 
 def test_exception_during_execution(
@@ -175,27 +172,26 @@ def test_exception_during_execution(
     mock_build_index_fn,
 ):
     """Test handling of exceptions during execution"""
-    with patch("time.sleep"):
-        error_message = "Unexpected error"
-        mock_build_index_fn.side_effect = Exception(error_message)
+    error_message = "Unexpected error"
+    mock_build_index_fn.side_effect = Exception(error_message)
 
-        mock_resource_manager.allocate.return_value = True
+    mock_resource_manager.allocate.return_value = True
 
-        workflow_executor.submit_workflow(sample_workflow_1)
-        workflow_executor._executor.shutdown(wait=True)
+    workflow_executor.submit_workflow(sample_workflow_1)
+    workflow_executor._executor.shutdown(wait=True)
 
-        mock_request_store.update.assert_called_with(
-            sample_workflow_1.job_id,
-            {"status": JobStatus.FAILED, "error_message": error_message},
-        )
-        mock_build_index_fn.assert_called_once()
+    mock_request_store.update.assert_called_with(
+        sample_workflow_1.job_id,
+        {"status": JobStatus.FAILED, "error_message": error_message},
+    )
+    mock_build_index_fn.assert_called_once()
 
-        mock_resource_manager.release.assert_called_with(
-            sample_workflow_1.gpu_memory_required, sample_workflow_1.cpu_memory_required
-        )
+    mock_resource_manager.release.assert_called_with(
+        sample_workflow_1.gpu_memory_required, sample_workflow_1.cpu_memory_required
+    )
 
 
-def test_not_enough_memory_initially_successful_execution(
+def test_not_enough_memory(
     workflow_executor,
     sample_workflow_1,
     mock_request_store,
@@ -203,53 +199,24 @@ def test_not_enough_memory_initially_successful_execution(
     mock_build_index_fn,
 ):
     """
-    Test successful execution when there is not enough initial memory for the workflow
+    Test handling when there is not enough memory for the workflow
     """
 
-    with patch("time.sleep") as patched_sleep:
-        mock_resource_manager.allocate.side_effect = (False, True)
+    mock_resource_manager.allocate.return_value = False
 
-        mock_build_index_fn.return_value = (True, "/path/to/index", None)
+    workflow_executor.submit_workflow(sample_workflow_1)
+    workflow_executor._executor.shutdown(wait=True)
 
-        workflow_executor.submit_workflow(sample_workflow_1)
-        workflow_executor._executor.shutdown(wait=True)
+    mock_build_index_fn.assert_not_called()
+    mock_resource_manager.release.assert_not_called()
 
-        mock_build_index_fn.assert_called_once_with(sample_workflow_1)
-        assert patched_sleep.call_count == 2
-
-        mock_request_store.update.assert_called_with(
-            sample_workflow_1.job_id,
-            {
-                "status": JobStatus.COMPLETED,
-                "file_name": "/path/to/index",
-                "error_message": None,
-            },
-        )
-
-        mock_resource_manager.release.assert_called_with(
-            sample_workflow_1.gpu_memory_required, sample_workflow_1.cpu_memory_required
-        )
-
-
-def test_not_enough_memory_initially_deleted_job(
-    workflow_executor,
-    sample_workflow_1,
-    mock_request_store,
-    mock_resource_manager,
-    mock_build_index_fn,
-):
-    """Test handling of job that was deleted during the memory allocation check"""
-
-    with patch("time.sleep") as patched_sleep:
-        mock_resource_manager.allocate.return_value = False
-        mock_request_store.get.return_value = False
-
-        workflow_executor.submit_workflow(sample_workflow_1)
-        workflow_executor._executor.shutdown(wait=True)
-
-        assert patched_sleep.call_count == 1
-        mock_build_index_fn.assert_not_called()
-        mock_resource_manager.release.assert_not_called()
+    mock_request_store.update.assert_called_with(
+        sample_workflow_1.job_id,
+        {
+            "status": JobStatus.FAILED,
+            "error_message": "Worker has no memory",
+        },
+    )
 
 
 def test_shutdown(workflow_executor):
