@@ -86,6 +86,7 @@ class WorkflowExecutor:
             This method is intended to be run in a separate thread.
         """
 
+        # TODO: Block until memory resource is available, instead of failing immediately
         if not self._resource_manager.allocate(
             workflow.gpu_memory_required, workflow.cpu_memory_required
         ):
