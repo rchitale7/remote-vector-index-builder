@@ -92,7 +92,10 @@ class WorkflowExecutor:
         ):
             self._request_store.update(
                 workflow.job_id,
-                {"status": JobStatus.FAILED, "error_message": "Worker has not enough memory available at this time"},
+                {
+                    "status": JobStatus.FAILED,
+                    "error_message": "Worker has not enough memory available at this time",
+                },
             )
             return
 

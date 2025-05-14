@@ -214,7 +214,7 @@ def test_not_enough_memory(
         sample_workflow_1.job_id,
         {
             "status": JobStatus.FAILED,
-            "error_message": "Worker has no memory",
+            "error_message": "Worker has not enough memory available at this time",
         },
     )
 
