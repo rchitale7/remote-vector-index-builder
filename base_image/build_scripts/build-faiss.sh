@@ -36,5 +36,5 @@ echo "Running make command"
 # in which case it is recommended to set the -j option to a fixed value (such as -j6).
 make -C build -j6 faiss swigfaiss
 
-# Step 3: Generate and install python packages
+# Step 3: Generate and install python packages. 
 (cd build/faiss/python && python setup.py install)
