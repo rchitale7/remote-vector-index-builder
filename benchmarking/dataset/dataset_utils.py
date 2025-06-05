@@ -69,15 +69,6 @@ def decompress_dataset(filePath: str, compressionType: str, outputFile: str):
 def prepare_indexing_dataset(
     datasetFile: str, normalize: bool = None, docToRead: int = -1
 ) -> tuple[int, np.ndarray, list]:
-    dataset_name = datasetFile.split(".")[-2].split("/")[-1]
-    logging.info(f"Checking if dataset name: {dataset_name} exists")
-    dir_path = ensureDir("numpy_files")
-    if os.path.exists(f"{dir_path}/{dataset_name}.npy"):
-        logging.info(f"Dataset {dataset_name} exists")
-        xb = np.load(f"{dir_path}/{dataset_name}.npy", mmap_mode="r+")
-        d = len(xb[0])
-        ids = [i for i in range(len(xb))]
-        return d, xb, ids
     logging.info(f"Reading data set from file: {datasetFile}")
     index_dataset: HDF5DataSet = HDF5DataSet(datasetFile, Context.INDEX)
 

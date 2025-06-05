@@ -33,22 +33,22 @@ Also, you probably will need to run all of the `docker` commands with `sudo`. Si
     ```
     touch env_variables
     ```
-    The environment variables are:
+    - The environment variables are:
        - `workload`: name of the dataset. Can be a comma separated list of datasets, 
        to benchmark with multiple datasets. Please see the [`benchmarks.yml`](benchmarks.yml) file for the list of 
        possible datasets. The name of the dataset is the top level yaml key - for example, `sift-128`, `ms-marco-384`, etc
-         - `workload_type`: Can be `INDEX`, `INDEX_AND_SEARCH`, or `INDEX`. Defaults to `INDEX_AND_SEARCH`
-         - `index_type`: Can be `gpu`, `cpu`, or `all`. Defaults to `all`
-         - `run_id`: Sub-folder to store results. Defaults to `default_run_id`
-         - `run_type`: Can be `run_workload`, `write_results` or `all`. Defaults to `all`. 
-            - `run_workload` will run the benchmarks and generate all graphs, and save the results in json files.
-            `write_results` will read the json files, and combine them into a single csv file. 
-         - For example, to run the GPU Faiss benchmarks with `sift-128` and `gist-960` for indexing and searching, 
-         the environment variables file will look like:
-             ```
-             index_type=gpu
-             workload=sift-128,gist-960
-             ```
+       - `workload_type`: Can be `INDEX`, `INDEX_AND_SEARCH`, or `INDEX`. Defaults to `INDEX_AND_SEARCH`
+       - `index_type`: Can be `gpu`, `cpu`, or `all`. Defaults to `all`
+       - `run_id`: Sub-folder to store results. Defaults to `default_run_id`
+       - `run_type`: Can be `run_workload`, `write_results` or `all`. Defaults to `all`. 
+          - `run_workload` will run the benchmarks and generate all graphs, and save the results in json files.
+          `write_results` will read the json files, and combine them into a single csv file. 
+       - For example, to run the GPU Faiss benchmarks with `sift-128` and `gist-960` for indexing and searching, 
+       the environment variables file will look like:
+           ```
+           index_type=gpu
+           workload=sift-128,gist-960
+           ```
 7. Run the docker container: `docker run --env-file env_variables -v ./docker-mountpoint:/benchmarking/files --gpus all opensearchstaging/remote-vector-index-builder:benchmark-tool-latest`
     - You can run the docker container in the background with `-d` option
     - Note that downloading the sift-128 and gist-960 datasets may fail. In that case, manually download 
