@@ -8,21 +8,9 @@ gpu:
       - 4
     indexing-parameters:
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
     search-parameters:
       - {"ef_search": 256}
   ms-marco-384:
@@ -34,21 +22,9 @@ gpu:
       - 4
     indexing-parameters:
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
     search-parameters:
       - {"ef_search": 256}
   cohere-768-l2:
@@ -60,21 +36,9 @@ gpu:
       - 4
     indexing-parameters:
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
     search-parameters:
       - { "ef_search": 256 }
   cohere-768-ip:
@@ -89,21 +53,9 @@ gpu:
     space-type: innerproduct
     indexing-parameters:
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
     search-parameters:
       - { "ef_search": 256 }
   cohere-10M-768-ip:
@@ -118,21 +70,9 @@ gpu:
     space-type: innerproduct
     indexing-parameters:
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
     search-parameters:
       - { "ef_search": 256 }
   gist-960:
@@ -143,21 +83,9 @@ gpu:
       - 4
     indexing-parameters:
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
     search-parameters:
       - { "ef_search": 256 }
   open-ai-1536:
@@ -168,21 +96,9 @@ gpu:
       - 4
     indexing-parameters:
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
     search-parameters:
       - { "ef_search": 256 }
   bigAnn-10M-128:
@@ -193,21 +109,9 @@ gpu:
       - 4
     indexing-parameters:
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 1, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
       - { "refine_rate": 2, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 3, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.1 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.2 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.4 }}
-      - { "refine_rate": 4, "ivf_pq_params": {"kmeans_trainset_fraction": 0.5 }}
     search-parameters:
       - { "ef_search": 256 }
 cpu:
