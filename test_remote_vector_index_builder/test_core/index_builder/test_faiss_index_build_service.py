@@ -19,7 +19,7 @@ class TestFaissIndexBuildService:
     def service(self):
         with patch("os.cpu_count", return_value=8):
             service = FaissIndexBuildService()
-            assert service.omp_num_threads == 6
+            assert service.omp_num_threads == 2
             return service
 
     def test_build_index_success(
@@ -29,7 +29,7 @@ class TestFaissIndexBuildService:
         service.build_index(index_build_parameters, vectors_dataset, output_path)
 
         # Verify OMP threads were set correctly
-        assert faiss.omp_get_num_threads() == 6  # 8 CPUs - 2 = 6 threads
+        assert faiss.omp_get_num_threads() == 2  # 8 CPUs/4 = 2 threads
         assert os.path.exists(output_path)
 
     def test_build_index_gpu_creation_error(

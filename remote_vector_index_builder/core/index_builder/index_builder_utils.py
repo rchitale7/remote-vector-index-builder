@@ -18,12 +18,12 @@ from core.common.models import (
 def get_omp_num_threads():
     """
     Calculate the number of OpenMP threads to use for parallel processing.
-    Returns the maximum of (CPU count - 2) or 1 to ensure at least one thread.
+    Returns the maximum of (CPU count/4) or 1 to ensure at least one thread.
 
     Returns:
         int: Number of threads to use
     """
-    return max(math.floor(os.cpu_count() - 2), 1)
+    return max(math.floor(os.cpu_count() / 4), 1)
 
 
 def calculate_ivf_pq_n_lists(doc_count: int):
