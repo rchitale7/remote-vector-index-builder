@@ -23,7 +23,7 @@ def get_omp_num_threads():
     Returns:
         int: Number of threads to use
     """
-    return max(math.floor(os.cpu_count()/4), 1)
+    return max(math.floor(os.cpu_count() / 4), 1)
 
 
 def calculate_ivf_pq_n_lists(doc_count: int):
