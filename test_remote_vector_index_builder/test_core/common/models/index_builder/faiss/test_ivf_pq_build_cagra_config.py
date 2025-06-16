@@ -33,7 +33,7 @@ class TestIVFPQBuildCagraConfig:
     def test_default_initialization(self, default_config):
         assert default_config.n_lists == 1024
         assert default_config.kmeans_n_iters == 20
-        assert default_config.kmeans_trainset_fraction == 0.5
+        assert default_config.kmeans_trainset_fraction == 0.1
         assert default_config.pq_bits == 8
         assert default_config.pq_dim == 0
         assert default_config.conservative_memory_allocation is True
@@ -106,7 +106,7 @@ class TestIVFPQBuildCagraConfig:
         config = IVFPQBuildCagraConfig.from_dict(partial_params)
         assert config.n_lists == 2048
         assert config.kmeans_n_iters == 30
-        assert config.kmeans_trainset_fraction == 0.5  # default value
+        assert config.kmeans_trainset_fraction == 0.1  # default value
         assert config.pq_bits == 8  # default value
         assert config.pq_dim == 0  # default value
         assert config.conservative_memory_allocation is True  # default value

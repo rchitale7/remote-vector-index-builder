@@ -32,6 +32,7 @@ class FaissIndexBuildService(IndexBuildService):
 
     def __init__(self):
         self.omp_num_threads = get_omp_num_threads()
+        self.PQ_DIM_COMPRESSION_FACTOR = 4
 
     def build_index(
         self,
@@ -67,7 +68,10 @@ class FaissIndexBuildService(IndexBuildService):
                     "n_lists": calculate_ivf_pq_n_lists(
                         index_build_parameters.doc_count
                     ),
-                    "pq_dim": index_build_parameters.dimension,
+                    "pq_dim": int(
+                        index_build_parameters.dimension
+                        / self.PQ_DIM_COMPRESSION_FACTOR
+                    ),
                 }
             }
             faiss_gpu_index_cagra_builder = FaissGPUIndexCagraBuilder.from_dict(
