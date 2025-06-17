@@ -11,6 +11,7 @@ from app.models.workflow import BuildWorkflow
 from app.models.job import JobStatus
 from app.base.resources import ResourceManager
 from app.executors.workflow_executor import WorkflowExecutor
+from core.common.models import IndexBuildParameters
 
 TOTAL_GPU_MEMORY = 10
 TOTAL_CPU_MEMORY = 10
@@ -57,6 +58,9 @@ def sample_workflow_1():
     workflow.job_id = "test_job_1"
     workflow.gpu_memory_required = TOTAL_GPU_MEMORY - 2
     workflow.cpu_memory_required = TOTAL_CPU_MEMORY - 6
+    index_build_params = Mock(spec=IndexBuildParameters)
+    index_build_params.vector_path = "test/path"
+    workflow.index_build_parameters = index_build_params
     return workflow
 
 

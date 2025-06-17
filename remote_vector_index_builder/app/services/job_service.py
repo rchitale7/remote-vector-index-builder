@@ -77,7 +77,9 @@ class JobService:
         if job:
             if job.compare_request_parameters(request_parameters):
                 return True
-            raise HashCollisionError(f"Hash collision detected for job_id: {job_id}")
+            raise HashCollisionError(
+                f"Hash collision detected for job_id: {job_id} with vector path {request_parameters.vector_path}"
+            )
         return False
 
     def _add_to_request_store(
@@ -103,7 +105,10 @@ class JobService:
         )
 
         if not result:
-            raise CapacityError("Could not add item to request store")
+            raise CapacityError(
+                f"Could not add job {job_id} with vector path {request_parameters.vector_path} to request store, "
+                f"because request store is at capacity"
+            )
 
     def _create_workflow(
         self,
@@ -139,7 +144,8 @@ class JobService:
         ):
             self.request_store.delete(job_id)
             raise CapacityError(
-                f"Insufficient available resources to process job {job_id}"
+                f"Insufficient available resources to process job {job_id} "
+                f"with vector path {index_build_parameters.vector_path}"
             )
 
         return workflow
@@ -170,24 +176,26 @@ class JobService:
         job_id = generate_job_id(request_parameters)
         job_exists = self._validate_job_existence(job_id, request_parameters)
         if job_exists:
-            logger.info(f"Job with id {job_id} already exists")
+            logger.info(
+                f"Job with id {job_id} with vector path {index_build_parameters.vector_path} already exists"
+            )
             return job_id
 
         self._add_to_request_store(job_id, request_parameters)
-        logger.info(f"Added job to request store with job id: {job_id}")
+        logger.debug(
+            f"Added job id: {job_id} with vector path {index_build_parameters.vector_path} to request store"
+        )
 
         gpu_mem, cpu_mem = calculate_memory_requirements(index_build_parameters)
-
-        logger.info(
-            f"Job id requirements: GPU memory: {gpu_mem}, CPU memory: {cpu_mem}"
-        )
 
         workflow = self._create_workflow(
             job_id, gpu_mem, cpu_mem, index_build_parameters
         )
 
         self.workflow_executor.submit_workflow(workflow)
-        logger.info(f"Successfully created workflow with job id: {job_id}")
+        logger.info(
+            f"Successfully created job id: {job_id} with vector path {index_build_parameters.vector_path}"
+        )
 
         return job_id
 

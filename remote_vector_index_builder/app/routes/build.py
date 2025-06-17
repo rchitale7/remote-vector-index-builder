@@ -4,6 +4,7 @@
 # The OpenSearch Contributors require contributions made to
 # this file be licensed under the Apache-2.0 license or a
 # compatible open source license.
+import traceback
 from app.base.exceptions import HashCollisionError, CapacityError
 from fastapi import APIRouter, HTTPException, Request
 from app.schemas.api import CreateJobResponse
@@ -13,6 +14,26 @@ import logging
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+def _handle_build_error(
+    e: Exception, index_build_parameters: IndexBuildParameters, status_code: int
+):
+    """
+    Helper function to handle common error logging and exception raising.
+
+    Args:
+        e (Exception): The exception that was raised
+        index_build_parameters (IndexBuildParameters): The parameters that were used
+        status_code (int): HTTP status code to return
+
+    Raises:
+        HTTPException: With the provided status code and error message
+    """
+    logger.error(f"Build failed with error: {e}")
+    logger.error(f"Index build parameters: {index_build_parameters}")
+    logger.error(traceback.format_exc())
+    raise HTTPException(status_code=status_code, detail=str(e)) from e
 
 
 @router.post("/_build")
@@ -42,7 +63,8 @@ def create_job(
         job_service = request.app.state.job_service
         job_id = job_service.create_job(index_build_parameters)
     except HashCollisionError as e:
-        raise HTTPException(status_code=429, detail=str(e))
+        _handle_build_error(e, index_build_parameters, 429)
     except CapacityError as e:
-        raise HTTPException(status_code=507, detail=str(e))
+        _handle_build_error(e, index_build_parameters, 507)
+
     return CreateJobResponse(job_id=job_id)

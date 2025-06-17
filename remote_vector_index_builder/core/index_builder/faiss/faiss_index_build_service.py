@@ -89,7 +89,10 @@ class FaissIndexBuildService(IndexBuildService):
             )
             t2 = timer()
             index_build_time = t2 - t1
-            logging.debug(f"Index build time: {index_build_time:.2f} seconds")
+            logging.debug(
+                f"Index build time for vector path {index_build_parameters.vector_path}: "
+                f"{index_build_time:.2f} seconds"
+            )
 
             # Step 2a: Create a structured CPUIndexConfig having defaults,
             # from a partial dictionary set from index build params
@@ -112,7 +115,10 @@ class FaissIndexBuildService(IndexBuildService):
             )
             t2 = timer()
             index_conversion_time = t2 - t1
-            logging.debug(f"Index conversion time: {index_conversion_time:.2f} seconds")
+            logging.debug(
+                f"Index conversion time for vector path {index_build_parameters.vector_path}: "
+                f"{index_conversion_time:.2f} seconds"
+            )
 
             # Step 3: Write CPU Index to persistent storage
             t1 = timer()
@@ -121,7 +127,10 @@ class FaissIndexBuildService(IndexBuildService):
             )
             t2 = timer()
             index_write_time = t2 - t1
-            logging.debug(f"Index write time: {index_write_time:.2f} seconds")
+            logging.debug(
+                f"Index write time for vector path {index_build_parameters.vector_path}: "
+                f"{index_write_time:.2f} seconds"
+            )
 
         except Exception as exception:
             # Clean up GPU Index Response if orchestrator failed after GPU Index Creation
@@ -129,14 +138,21 @@ class FaissIndexBuildService(IndexBuildService):
                 try:
                     faiss_gpu_build_index_output.cleanup()
                 except Exception as e:
-                    print(f"Warning: Failed to clean up GPU index response: {str(e)}")
+                    logging.error(
+                        f"Failed to clean up GPU index response for vector path "
+                        f"{index_build_parameters.vector_path}: {e}"
+                    )
 
             # Clean up CPU Index Response if orchestrator failed after CPU Index Creation
             if faiss_cpu_build_index_output is not None:
                 try:
                     faiss_cpu_build_index_output.cleanup()
                 except Exception as e:
-                    print(f"Warning: Failed to clean up CPU index response: {str(e)}")
+                    logging.error(
+                        f"Failed to clean up CPU index response for vector path "
+                        f"{index_build_parameters.vector_path}: {e}"
+                    )
+
             raise Exception(
-                f"Faiss Index Build Service build_index workflow failed. Reason: {str(exception)}"
+                f"Faiss Index Build Service build_index workflow failed: {exception}"
             ) from exception
