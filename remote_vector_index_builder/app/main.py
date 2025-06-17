@@ -107,7 +107,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             {"field": field_path, "message": error["msg"], "type": error["type"]}
         )
 
-    logger.error(f"Error while validating parameters: #{errors}")
+    logger.info(f"Error while validating parameters: #{errors}")
     return JSONResponse(
         status_code=422, content={"detail": "Validation Error", "errors": errors}
     )
