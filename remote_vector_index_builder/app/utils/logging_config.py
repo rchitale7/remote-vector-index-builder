@@ -8,13 +8,13 @@
 import logging
 
 
-def configure_logging(log_level):
+def configure_logging(log_level, module_name):
     root_logger = (
         logging.getLogger()
     )  # root logging defaults to WARN, so setting as INFO here
     root_logger.setLevel(logging.INFO)
 
-    logger = logging.getLogger("remote_vector_index_builder")
+    logger = logging.getLogger(module_name)
 
     formatter = logging.Formatter(
         fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -28,4 +28,3 @@ def configure_logging(log_level):
     logger.addHandler(handler)
     logger.setLevel(level=log_level)
 
-    logger.propagate = False

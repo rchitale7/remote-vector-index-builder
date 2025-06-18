@@ -57,7 +57,8 @@ settings = Settings()
 gpu_memory_limit = settings.gpu_memory_limit * 10**9
 cpu_memory_limit = settings.cpu_memory_limit * 10**9
 
-configure_logging(settings.log_level)
+configure_logging(settings.log_level, "app")
+configure_logging(settings.log_level, "core")
 
 logger = logging.getLogger(__name__)
 
