@@ -27,4 +27,3 @@ def configure_logging(log_level, module_name):
 
     logger.addHandler(handler)
     logger.setLevel(level=log_level)
-
