@@ -24,6 +24,8 @@ from timeit import default_timer as timer
 
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 class FaissIndexBuildService(IndexBuildService):
     """
@@ -89,7 +91,7 @@ class FaissIndexBuildService(IndexBuildService):
             )
             t2 = timer()
             index_build_time = t2 - t1
-            logging.debug(
+            logger.debug(
                 f"Index build time for vector path {index_build_parameters.vector_path}: "
                 f"{index_build_time:.2f} seconds"
             )
@@ -115,7 +117,7 @@ class FaissIndexBuildService(IndexBuildService):
             )
             t2 = timer()
             index_conversion_time = t2 - t1
-            logging.debug(
+            logger.debug(
                 f"Index conversion time for vector path {index_build_parameters.vector_path}: "
                 f"{index_conversion_time:.2f} seconds"
             )
@@ -127,7 +129,7 @@ class FaissIndexBuildService(IndexBuildService):
             )
             t2 = timer()
             index_write_time = t2 - t1
-            logging.debug(
+            logger.debug(
                 f"Index write time for vector path {index_build_parameters.vector_path}: "
                 f"{index_write_time:.2f} seconds"
             )
@@ -138,7 +140,7 @@ class FaissIndexBuildService(IndexBuildService):
                 try:
                     faiss_gpu_build_index_output.cleanup()
                 except Exception as e:
-                    logging.error(
+                    logger.error(
                         f"Failed to clean up GPU index response for vector path "
                         f"{index_build_parameters.vector_path}: {e}"
                     )
@@ -148,7 +150,7 @@ class FaissIndexBuildService(IndexBuildService):
                 try:
                     faiss_cpu_build_index_output.cleanup()
                 except Exception as e:
-                    logging.error(
+                    logger.error(
                         f"Failed to clean up CPU index response for vector path "
                         f"{index_build_parameters.vector_path}: {e}"
                     )
