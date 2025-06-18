@@ -19,6 +19,9 @@ jobs:
         issues: write
 
       steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+          
         - name: Get Approvers
           id: get_approvers
           run: |
