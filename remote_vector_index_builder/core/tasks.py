@@ -166,10 +166,10 @@ def run_tasks(
             return TaskResult(file_name=os.path.basename(remote_path))
         except Exception as e:
             logger.error(
-                f"Error running tasks for vector path {index_build_params.vector_path}: {e}"
+                f"Error running tasks for vector path {index_build_params.vector_path}: {e}. "
+                f"Index build parameters: {index_build_params}. "
+                f"Traceback: {traceback.format_exc()}"
             )
-            logger.error(f"Index build parameters: {index_build_params}")
-            logger.error(traceback.format_exc())
             return TaskResult(error=str(e))
         finally:
             if vectors_dataset is not None:

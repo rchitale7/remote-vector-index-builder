@@ -30,9 +30,11 @@ def _handle_build_error(
     Raises:
         HTTPException: With the provided status code and error message
     """
-    logger.error(f"Build failed with error: {e}")
-    logger.error(f"Index build parameters: {index_build_parameters}")
-    logger.error(traceback.format_exc())
+    logger.error(
+        f"Build failed with error: {e}. "
+        f"Index build parameters: {index_build_parameters}. "
+        f"Traceback: {traceback.format_exc()}"
+    )
     raise HTTPException(status_code=status_code, detail=str(e)) from e
 
 

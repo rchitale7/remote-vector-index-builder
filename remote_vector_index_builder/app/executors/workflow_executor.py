@@ -146,9 +146,9 @@ class WorkflowExecutor:
         except Exception as e:
             logger.error(
                 f"Build process failed for job {workflow.job_id} with vector path "
-                f"{workflow.index_build_parameters.vector_path}: {e}"
+                f"{workflow.index_build_parameters.vector_path}: {e}. "
+                f"Traceback: {traceback.format_exc()}"
             )
-            logger.error(traceback.format_exc())
             self._request_store.update(
                 workflow.job_id,
                 {"status": JobStatus.FAILED, "error_message": str(e)},
