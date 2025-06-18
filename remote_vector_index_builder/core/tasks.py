@@ -32,6 +32,7 @@ import tempfile
 from dataclasses import dataclass
 from io import BytesIO
 from timeit import default_timer as timer
+import traceback
 from typing import Any, Dict, Optional
 
 from core.common.models import IndexBuildParameters
@@ -115,7 +116,7 @@ def run_tasks(
             )
             t2 = timer()
             download_time = t2 - t1
-            logging.debug(
+            logger.debug(
                 f"Vector download time for vector path {index_build_params.vector_path}: {download_time:.2f} seconds"
             )
 
@@ -135,7 +136,7 @@ def run_tasks(
             )
             t2 = timer()
             build_time = t2 - t1
-            logging.debug(
+            logger.debug(
                 f"Total index build time for path {index_build_params.vector_path}: {build_time:.2f} seconds"
             )
 
@@ -153,7 +154,7 @@ def run_tasks(
             )
             t2 = timer()
             upload_time = t2 - t1
-            logging.debug(
+            logger.debug(
                 f"Total upload time for path {index_build_params.vector_path}: {upload_time:.2f} seconds"
             )
 
@@ -164,7 +165,11 @@ def run_tasks(
             )
             return TaskResult(file_name=os.path.basename(remote_path))
         except Exception as e:
-            logger.error(f"Error running tasks: {e}")
+            logger.error(
+                f"Error running tasks for vector path {index_build_params.vector_path}: {e}. "
+                f"Index build parameters: {index_build_params}. "
+                f"Traceback: {traceback.format_exc()}"
+            )
             return TaskResult(error=str(e))
         finally:
             if vectors_dataset is not None:

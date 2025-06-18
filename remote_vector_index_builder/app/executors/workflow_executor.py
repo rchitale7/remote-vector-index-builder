@@ -12,6 +12,7 @@ from app.models.workflow import BuildWorkflow
 from app.base.resources import ResourceManager
 from app.storage.base import RequestStore
 from app.models.job import JobStatus
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,18 @@ class WorkflowExecutor:
             This method is intended to be run in a separate thread.
         """
 
+        logger.debug(
+            f"Worker resource status before allocating memory for job id {workflow.job_id}: - "
+            f"GPU: {self._resource_manager.get_available_gpu_memory():,} bytes, "
+            f"CPU: {self._resource_manager.get_available_cpu_memory():,} bytes"
+        )
+
+        logger.debug(
+            f"Allocating memory for job id {workflow.job_id}: - "
+            f"GPU: {workflow.gpu_memory_required:,} bytes, "
+            f"CPU: {workflow.cpu_memory_required:,} bytes"
+        )
+
         # TODO: Block until memory resource is available, instead of failing immediately
         if not self._resource_manager.allocate(
             workflow.gpu_memory_required, workflow.cpu_memory_required
@@ -99,7 +112,7 @@ class WorkflowExecutor:
             )
             return
 
-        logger.info(
+        logger.debug(
             f"Worker resource status after allocating memory for job id {workflow.job_id}: - "
             f"GPU: {self._resource_manager.get_available_gpu_memory():,} bytes, "
             f"CPU: {self._resource_manager.get_available_cpu_memory():,} bytes"
@@ -120,16 +133,22 @@ class WorkflowExecutor:
                 )
 
                 logger.info(
-                    f"Job {workflow.job_id} completed with status: {status}, index path: "
+                    f"Job {workflow.job_id} with vector path {workflow.index_build_parameters.vector_path} "
+                    f"completed with status: {status}, created index path: "
                     f"{index_path}, and error message: {msg}"
                 )
             else:
                 logger.error(
-                    f"[ERROR] Job {workflow.job_id} was deleted during execution"
+                    f"Job {workflow.job_id} with vector path {workflow.index_build_parameters.vector_path} "
+                    f"was deleted during execution"
                 )
 
         except Exception as e:
-            logger.error(f"Build process failed for job {workflow.job_id}: {str(e)}")
+            logger.error(
+                f"Build process failed for job {workflow.job_id} with vector path "
+                f"{workflow.index_build_parameters.vector_path}: {e}. "
+                f"Traceback: {traceback.format_exc()}"
+            )
             self._request_store.update(
                 workflow.job_id,
                 {"status": JobStatus.FAILED, "error_message": str(e)},
