@@ -9,6 +9,11 @@ import logging
 
 
 def configure_logging(log_level):
+    root_logger = (
+        logging.getLogger()
+    )  # root logging defaults to WARN, so setting as INFO here
+    root_logger.setLevel(logging.INFO)
+
     logger = logging.getLogger("remote_vector_index_builder")
 
     formatter = logging.Formatter(
