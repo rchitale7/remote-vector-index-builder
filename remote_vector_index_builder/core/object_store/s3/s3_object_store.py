@@ -24,6 +24,12 @@ from core.object_store.object_store import ObjectStore
 
 logger = logging.getLogger(__name__)
 
+# Preventing cluttering of logs, when log level is set to DEBUG for core and app folders
+logging.getLogger("boto3").setLevel(logging.INFO)
+logging.getLogger("botocore").setLevel(logging.INFO)
+logging.getLogger("s3transfer").setLevel(logging.INFO)
+logging.getLogger("urllib3").setLevel(logging.INFO)
+
 
 def get_cpus(factor: float) -> int:
     """Get the number of CPUs to use for s3 upload or download operation
