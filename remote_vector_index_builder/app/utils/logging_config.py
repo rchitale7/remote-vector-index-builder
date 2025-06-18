@@ -27,3 +27,5 @@ def configure_logging(log_level):
 
     logger.addHandler(handler)
     logger.setLevel(level=log_level)
+
+    logger.propagate = False
