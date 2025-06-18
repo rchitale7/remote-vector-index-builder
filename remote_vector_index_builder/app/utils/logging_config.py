@@ -9,10 +9,16 @@ import logging
 
 
 def configure_logging(log_level):
-    # Configure logging
     logger = logging.getLogger("remote_vector_index_builder")
-    logger.basicConfig(
-        level=log_level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+
+    formatter = logging.Formatter(
+        fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    handler.setLevel(log_level)
+
+    logger.addHandler(handler)
+    logger.setLevel(level=log_level)
