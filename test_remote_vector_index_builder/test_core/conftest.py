@@ -12,6 +12,7 @@ from types import ModuleType
 from unittest.mock import Mock
 
 from core.common.models import VectorsDataset
+from core.object_store.s3.s3_object_store_config import S3ClientConfig
 
 
 class DeletionTracker:
@@ -197,7 +198,7 @@ sys.modules["faiss"] = faiss_mock
 def object_store_config():
     """Create a sample object store configuration for testing"""
     return {
-        "region": "us-west-2",
+        "s3_client_config": S3ClientConfig(region_name="us-west-2", max_retries="4")
     }
 
 
