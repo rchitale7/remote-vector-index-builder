@@ -25,6 +25,10 @@ RUN chown -R appuser:appuser /tmp
 USER appuser
 # Put conda in path so we can use conda activate
 ENV PATH=$CONDA_DIR/bin:$PATH
+
+# Accept Conda Terms of Service
+ENV CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes
+
 #install some necessary dependencies
 RUN conda install -c conda-forge -y -q python=3.11 cmake=3.30.4 make=4.2 swig=4.0 "numpy<2" scipy=1.14 pytest=7.4 gflags=2.2
 RUN cmake --version
