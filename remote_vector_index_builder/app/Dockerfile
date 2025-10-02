@@ -6,7 +6,7 @@
 # compatible open source license.
 
 ARG CORE_IMAGE_TAG=core-snapshot
-FROM opensearchstaging/remote-vector-index-builder:${CORE_IMAGE_TAG}
+FROM opensearchstaging/remote-vector-index-builder:core-rchital
 
 USER root
 
