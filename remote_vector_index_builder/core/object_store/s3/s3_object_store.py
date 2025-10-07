@@ -23,6 +23,8 @@ from core.common.models import IndexBuildParameters
 from core.object_store.object_store import ObjectStore
 from core.object_store.s3.s3_object_store_config import S3ClientConfig
 
+from io import BytesIO
+
 logger = logging.getLogger(__name__)
 
 
@@ -326,8 +328,9 @@ class S3ObjectStore(ObjectStore):
             # Create transfer config object
             s3_transfer_config = TransferConfig(**self.upload_transfer_config)
 
+            buffer = BytesIO(numpy_arr.tobytes())
             self.s3_client.upload_fileobj(
-                numpy_arr,
+                buffer,
                 self.bucket,
                 remote_store_path,
                 Config=s3_transfer_config,
