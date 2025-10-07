@@ -13,6 +13,7 @@ import threading
 from functools import cache
 from typing import Any, Dict
 import numpy as np
+import time
 
 import boto3
 from boto3.s3.transfer import TransferConfig
@@ -328,10 +329,14 @@ class S3ObjectStore(ObjectStore):
             # Create transfer config object
             s3_transfer_config = TransferConfig(**self.upload_transfer_config)
 
+            logger.info("Sleeping")
+            time.sleep(5)
             logger.info("Converting to buffer")
             buffer = memoryview(numpy_arr)
+            time.sleep(5)
             logger.info("Assigning to new variable")
             bytes_buffer = BytesIO(buffer)
+            time.sleep(5)
             logger.info("End convert to buffer, start upload")
             self.s3_client.upload_fileobj(
                 bytes_buffer,

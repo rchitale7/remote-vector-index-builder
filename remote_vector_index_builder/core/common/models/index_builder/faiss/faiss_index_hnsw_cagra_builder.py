@@ -174,6 +174,9 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
             # TODO: Investigate what issues may arise while writing index to local file
             # Write the final cpu index - vectors id mapping to disk
             serialized = None
+            logger.info("In method...")
+            logger.info("Sleeping ...")
+            time.sleep(5)
             logger.info("Start serializing index")
             if self.vector_dtype != DataType.BINARY:
                 serialized = faiss.serialize_index(cpu_build_index_output.index_id_map)
