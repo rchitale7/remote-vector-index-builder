@@ -328,8 +328,6 @@ class S3ObjectStore(ObjectStore):
         try:
             # Create transfer config object
             s3_transfer_config = TransferConfig(**self.upload_transfer_config)
-
-            logger.info("Sleeping")
             time.sleep(5)
             logger.info("Converting to buffer")
             buffer = memoryview(numpy_arr)

@@ -183,10 +183,11 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
 
             else:
                 serialized = faiss.serialize_index_binary(cpu_build_index_output.index_id_map)
-            logger.info("End serializing index")
-            logger.info("Sleeping...")
+            logger.info("End serializing index, sleeping")
             time.sleep(5)
             cpu_build_index_output.cleanup()
+            logger.info("Clean up done, sleeping")
+            time.sleep(5)
             return serialized
         except IOError as io_error:
             raise Exception(
