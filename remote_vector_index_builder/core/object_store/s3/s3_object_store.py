@@ -330,6 +330,7 @@ class S3ObjectStore(ObjectStore):
 
             logger.info("Converting to buffer")
             buffer = memoryview(numpy_arr)
+            logger.info("Assigning to new variable")
             bytes_buffer = BytesIO(buffer)
             logger.info("End convert to buffer, start upload")
             self.s3_client.upload_fileobj(
