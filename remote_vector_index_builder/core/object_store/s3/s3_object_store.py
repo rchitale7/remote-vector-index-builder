@@ -291,7 +291,7 @@ class S3ObjectStore(ObjectStore):
                 self.upload_args["SSEKMSKeyId"] = head_obj_response["SSEKMSKeyId"]
                 # We do not specify encryption context for now
 
-    def write_blob(self, numpy_arr: np.ndarray, remote_store_path: str) -> None:
+    def write_blob(self, bytes_array, remote_store_path: str) -> None:
         """
         Uploads a local file to S3, with retry logic.
 
@@ -329,11 +329,8 @@ class S3ObjectStore(ObjectStore):
             # Create transfer config object
             s3_transfer_config = TransferConfig(**self.upload_transfer_config)
             time.sleep(5)
-            logger.info("Converting to buffer")
-            buffer = memoryview(numpy_arr)
-            time.sleep(5)
-            logger.info("Assigning to new variable")
-            bytes_buffer = BytesIO(buffer)
+            logger.info("Assigning to buffer")
+            bytes_buffer = BytesIO(bytes_array)
             time.sleep(5)
             logger.info("End convert to buffer, start upload")
             self.s3_client.upload_fileobj(

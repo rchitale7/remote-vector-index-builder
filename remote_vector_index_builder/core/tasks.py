@@ -26,6 +26,7 @@ individual task in sequence. One reason to call each task in sequence is to pers
 before building the index. The default run_tasks function does not do this, for simplicity.
 
 """
+import faiss
 import logging
 import os
 import tempfile
@@ -95,6 +96,7 @@ def run_tasks(
         if object_store_config is None:
             object_store_config = {}
 
+        vector_writer = faiss.VectorIOWriter()
         vectors_dataset = None
         try:
             logger.debug(
@@ -130,9 +132,10 @@ def run_tasks(
             )
 
             t1 = timer()
-            numpy_arr = build_index(
+            build_index(
                 index_build_params=index_build_params,
                 vectors_dataset=vectors_dataset,
+                vector_writer=vector_writer,
                 cpu_index_output_file_path=index_local_path,
             )
             t2 = timer()
@@ -143,6 +146,8 @@ def run_tasks(
 
             vectors_dataset.free_vectors_space()
 
+            bytes_array = vector_writer.data
+
             logger.debug(
                 f"Uploading index for vector path: {index_build_params.vector_path}"
             )
@@ -151,13 +156,14 @@ def run_tasks(
             remote_path = upload_index(
                 index_build_params=index_build_params,
                 object_store=object_store,
-                numpy_arr=numpy_arr,
+                bytes_array=bytes_array,
             )
             t2 = timer()
             upload_time = t2 - t1
             logger.debug(
                 f"Total upload time for path {index_build_params.vector_path}: {upload_time:.2f} seconds"
             )
+            del vector_writer
 
 
             logger.debug(
@@ -179,6 +185,7 @@ def run_tasks(
 def build_index(
     index_build_params: IndexBuildParameters,
     vectors_dataset: VectorsDataset,
+    vector_writer: faiss.VectorIOWriter,
     cpu_index_output_file_path: str,
 ) -> np.ndarray:
     """Builds an index using the provided vectors dataset and parameters.
@@ -209,7 +216,7 @@ def build_index(
     """
     faiss_service = FaissIndexBuildService()
     numpy_arr = faiss_service.build_index(
-        index_build_params, vectors_dataset, cpu_index_output_file_path
+        index_build_params, vectors_dataset, vector_writer, cpu_index_output_file_path
     )
     return numpy_arr
 
@@ -296,7 +303,7 @@ def create_vectors_dataset(
 def upload_index(
     index_build_params: IndexBuildParameters,
     object_store: ObjectStore,
-    numpy_arr: np.ndarray,
+    bytes_array
 ) -> str:
     """
     Uploads a built index from a local path to the configured object store.
@@ -329,6 +336,6 @@ def upload_index(
     # the index path is in the same root location as the vector path
     index_remote_path = vector_root_path + "." + index_build_params.engine
 
-    object_store.write_blob(numpy_arr, index_remote_path)
+    object_store.write_blob(bytes_array, index_remote_path)
 
     return index_remote_path

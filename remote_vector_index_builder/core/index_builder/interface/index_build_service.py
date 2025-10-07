@@ -21,6 +21,7 @@ class IndexBuildService(ABC):
         self,
         index_build_parameters: IndexBuildParameters,
         vectors_dataset: VectorsDataset,
+        vector_writer,
         cpu_index_output_file_path: str,
     ) -> None:
         """

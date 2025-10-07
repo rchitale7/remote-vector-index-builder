@@ -156,9 +156,10 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
 
     def write_cpu_index(
         self,
+        vector_writer: faiss.VectorIOWriter,
         cpu_build_index_output: FaissCpuBuildIndexOutput,
         cpu_index_output_file_path: str,
-    ) -> np.ndarray:
+    ):
         """
         Method to write the CPU index and vector dataset id mapping to persistent local file path
         for uploading later to remote object store.
@@ -173,22 +174,20 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
 
             # TODO: Investigate what issues may arise while writing index to local file
             # Write the final cpu index - vectors id mapping to disk
-            serialized = None
             logger.info("In method...")
             logger.info("Sleeping ...")
             time.sleep(5)
             logger.info("Start serializing index")
             if self.vector_dtype != DataType.BINARY:
-                serialized = faiss.serialize_index(cpu_build_index_output.index_id_map)
-
+                faiss.write_index(cpu_build_index_output.index_id_map, vector_writer)
             else:
-                serialized = faiss.serialize_index_binary(cpu_build_index_output.index_id_map)
+                faiss.write_index_binary(cpu_build_index_output.index_id_map, vector_writer)
             logger.info("End serializing index, sleeping")
             time.sleep(5)
             cpu_build_index_output.cleanup()
             logger.info("Clean up done, sleeping")
             time.sleep(5)
-            return serialized
+            return
         except IOError as io_error:
             raise Exception(
                 f"Failed to write index to file {cpu_index_output_file_path}: {str(io_error)}"
