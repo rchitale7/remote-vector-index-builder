@@ -171,6 +171,7 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
             # TODO: Investigate what issues may arise while writing index to local file
             # Write the final cpu index - vectors id mapping to disk
             if self.vector_dtype != DataType.BINARY:
+                print("Start serializing index")
                 return faiss.serialize_index(cpu_build_index_output.index_id_map)
             else:
                 return faiss.serialize_index_binary(cpu_build_index_output.index_id_map)
@@ -183,4 +184,5 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
                 f"Unexpected error while writing index to file: {str(e)}"
             ) from e
         finally:
+            print("End serialize index")
             cpu_build_index_output.cleanup()

@@ -328,15 +328,19 @@ class S3ObjectStore(ObjectStore):
             # Create transfer config object
             s3_transfer_config = TransferConfig(**self.upload_transfer_config)
 
-            buffer = numpy_arr.data
+            logger.info("Converting to buffer")
+            buffer = memoryview(numpy_arr)
+            bytes_buffer = BytesIO(buffer)
+            logger.info("End convert to buffer, start upload")
             self.s3_client.upload_fileobj(
-                buffer,
+                bytes_buffer,
                 self.bucket,
                 remote_store_path,
                 Config=s3_transfer_config,
                 Callback=callback_func,
                 ExtraArgs=self.upload_args,
             )
+            logger.info("End upload")
             return
         except TypeError as e:
             raise BlobError(f"Error calling boto3.upload_file: {e}") from e
