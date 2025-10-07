@@ -328,7 +328,7 @@ class S3ObjectStore(ObjectStore):
             # Create transfer config object
             s3_transfer_config = TransferConfig(**self.upload_transfer_config)
 
-            buffer = BytesIO(numpy_arr.tobytes())
+            buffer = numpy_arr.data
             self.s3_client.upload_fileobj(
                 buffer,
                 self.bucket,
