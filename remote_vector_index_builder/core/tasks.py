@@ -159,7 +159,6 @@ def run_tasks(
                 f"Total upload time for path {index_build_params.vector_path}: {upload_time:.2f} seconds"
             )
 
-            os.remove(index_local_path)
 
             logger.debug(
                 f"Ending task execution for vector path: {index_build_params.vector_path}"
