@@ -193,4 +193,3 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
             raise Exception(
                 f"Unexpected error while writing index to file: {str(e)}"
             ) from e
-        finally:
