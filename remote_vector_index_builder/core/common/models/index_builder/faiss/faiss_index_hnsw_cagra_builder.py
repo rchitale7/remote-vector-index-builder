@@ -15,6 +15,7 @@ from core.common.models.index_builder import (
     FaissGpuBuildIndexOutput,
     FaissCPUIndexBuilder,
 )
+import time
 
 from remote_vector_index_builder.core.common.models.index_build_parameters import (
     DataType,
@@ -172,11 +173,18 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
 
             # TODO: Investigate what issues may arise while writing index to local file
             # Write the final cpu index - vectors id mapping to disk
+            serialized = None
+            logger.info("Start serializing index")
             if self.vector_dtype != DataType.BINARY:
-                logger.info("Start serializing index")
-                return faiss.serialize_index(cpu_build_index_output.index_id_map)
+                serialized = faiss.serialize_index(cpu_build_index_output.index_id_map)
+
             else:
-                return faiss.serialize_index_binary(cpu_build_index_output.index_id_map)
+                serialized = faiss.serialize_index_binary(cpu_build_index_output.index_id_map)
+            logger.info("End serializing index")
+            logger.info("Sleeping...")
+            time.sleep(5)
+            cpu_build_index_output.cleanup()
+            return serialized
         except IOError as io_error:
             raise Exception(
                 f"Failed to write index to file {cpu_index_output_file_path}: {str(io_error)}"
@@ -186,5 +194,3 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
                 f"Unexpected error while writing index to file: {str(e)}"
             ) from e
         finally:
-            logger.info("End serialize index")
-            cpu_build_index_output.cleanup()
