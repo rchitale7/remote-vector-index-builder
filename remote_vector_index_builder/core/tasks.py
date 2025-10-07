@@ -130,7 +130,7 @@ def run_tasks(
             )
 
             t1 = timer()
-            build_index(
+            numpy_arr = build_index(
                 index_build_params=index_build_params,
                 vectors_dataset=vectors_dataset,
                 cpu_index_output_file_path=index_local_path,
@@ -151,7 +151,7 @@ def run_tasks(
             remote_path = upload_index(
                 index_build_params=index_build_params,
                 object_store=object_store,
-                index_local_path=index_local_path,
+                numpy_arr=numpy_arr,
             )
             t2 = timer()
             upload_time = t2 - t1
