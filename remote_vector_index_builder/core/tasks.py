@@ -34,6 +34,7 @@ from io import BytesIO
 from timeit import default_timer as timer
 import traceback
 from typing import Any, Dict, Optional
+import numpy as np
 
 from core.common.models import IndexBuildParameters
 from core.common.models import VectorsDataset
@@ -180,7 +181,7 @@ def build_index(
     index_build_params: IndexBuildParameters,
     vectors_dataset: VectorsDataset,
     cpu_index_output_file_path: str,
-) -> None:
+) -> np.ndarray:
     """Builds an index using the provided vectors dataset and parameters.
 
     This function wraps the FaissIndexBuildService build_index function. In the future,
@@ -208,9 +209,10 @@ def build_index(
 
     """
     faiss_service = FaissIndexBuildService()
-    faiss_service.build_index(
+    numpy_arr = faiss_service.build_index(
         index_build_params, vectors_dataset, cpu_index_output_file_path
     )
+    return numpy_arr
 
 
 def _determine_streaming_buffer(
@@ -295,7 +297,7 @@ def create_vectors_dataset(
 def upload_index(
     index_build_params: IndexBuildParameters,
     object_store: ObjectStore,
-    index_local_path: str,
+    numpy_arr: np.ndarray,
 ) -> str:
     """
     Uploads a built index from a local path to the configured object store.
@@ -328,6 +330,6 @@ def upload_index(
     # the index path is in the same root location as the vector path
     index_remote_path = vector_root_path + "." + index_build_params.engine
 
-    object_store.write_blob(index_local_path, index_remote_path)
+    object_store.write_blob(numpy_arr, index_remote_path)
 
     return index_remote_path

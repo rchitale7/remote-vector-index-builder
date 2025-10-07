@@ -7,6 +7,7 @@
 
 from abc import ABC, abstractmethod
 from io import BytesIO
+import numpy as np
 
 
 class ObjectStore(ABC):
@@ -40,7 +41,7 @@ class ObjectStore(ABC):
         pass
 
     @abstractmethod
-    def write_blob(self, local_file_path: str, remote_store_path: str) -> None:
+    def write_blob(self, numpy_arr: np.ndarray, remote_store_path: str) -> None:
         """
         Uploads the blob at local_file_path to the remote_store_path
 

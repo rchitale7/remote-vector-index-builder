@@ -6,6 +6,7 @@
 # compatible open source license.
 
 from abc import ABC, abstractmethod
+import numpy as np
 from core.common.models.index_builder import (
     FaissCpuBuildIndexOutput,
     FaissGpuBuildIndexOutput,
@@ -43,7 +44,7 @@ class FaissCPUIndexBuilder(ABC):
         self,
         cpu_build_index_output: FaissCpuBuildIndexOutput,
         cpu_index_output_file_path: str,
-    ) -> None:
+    ) -> np.ndarray:
         """
         Implement this abstract method to write the cpu index to specified output file path
 

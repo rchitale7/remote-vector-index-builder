@@ -12,6 +12,7 @@ import sys
 import threading
 from functools import cache
 from typing import Any, Dict
+import numpy as np
 
 import boto3
 from boto3.s3.transfer import TransferConfig
@@ -287,7 +288,7 @@ class S3ObjectStore(ObjectStore):
                 self.upload_args["SSEKMSKeyId"] = head_obj_response["SSEKMSKeyId"]
                 # We do not specify encryption context for now
 
-    def write_blob(self, local_file_path: str, remote_store_path: str) -> None:
+    def write_blob(self, numpy_arr: np.ndarray, remote_store_path: str) -> None:
         """
         Uploads a local file to S3, with retry logic.
 
@@ -325,8 +326,8 @@ class S3ObjectStore(ObjectStore):
             # Create transfer config object
             s3_transfer_config = TransferConfig(**self.upload_transfer_config)
 
-            self.s3_client.upload_file(
-                local_file_path,
+            self.s3_client.upload_file_obj(
+                numpy_arr,
                 self.bucket,
                 remote_store_path,
                 Config=s3_transfer_config,

@@ -6,6 +6,7 @@
 # compatible open source license.
 
 import faiss
+import numpy as np
 from dataclasses import dataclass
 from typing import Dict, Any
 from core.common.models.index_builder import (
@@ -154,7 +155,7 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
         self,
         cpu_build_index_output: FaissCpuBuildIndexOutput,
         cpu_index_output_file_path: str,
-    ) -> None:
+    ) -> np.ndarray:
         """
         Method to write the CPU index and vector dataset id mapping to persistent local file path
         for uploading later to remote object store.
@@ -170,15 +171,9 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
             # TODO: Investigate what issues may arise while writing index to local file
             # Write the final cpu index - vectors id mapping to disk
             if self.vector_dtype != DataType.BINARY:
-                faiss.write_index(
-                    cpu_build_index_output.index_id_map, cpu_index_output_file_path
-                )
+                return faiss.serialize_index(cpu_build_index_output.index_id_map)
             else:
-                faiss.write_index_binary(
-                    cpu_build_index_output.index_id_map, cpu_index_output_file_path
-                )
-            # Free memory taken by CPU Index
-            cpu_build_index_output.cleanup()
+                return faiss.serialize_index_binary(cpu_build_index_output.index_id_map)
         except IOError as io_error:
             raise Exception(
                 f"Failed to write index to file {cpu_index_output_file_path}: {str(io_error)}"
@@ -187,3 +182,5 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
             raise Exception(
                 f"Unexpected error while writing index to file: {str(e)}"
             ) from e
+        finally:
+            cpu_build_index_output.cleanup()

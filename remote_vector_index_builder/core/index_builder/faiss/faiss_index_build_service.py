@@ -6,6 +6,7 @@
 # compatible open source license.
 
 import faiss
+import numpy as np
 from core.common.models import (
     IndexBuildParameters,
     VectorsDataset,
@@ -43,7 +44,7 @@ class FaissIndexBuildService(IndexBuildService):
         index_build_parameters: IndexBuildParameters,
         vectors_dataset: VectorsDataset,
         cpu_index_output_file_path: str,
-    ) -> None:
+    ) -> np.ndarray:
         """
         Orchestrates the workflow of
         - creating a GPU Index for the specified vectors dataset,
@@ -141,7 +142,7 @@ class FaissIndexBuildService(IndexBuildService):
 
             # Step 3: Write CPU Index to persistent storage
             t1 = timer()
-            faiss_index_hnsw_cagra_builder.write_cpu_index(
+            numpy_arr = faiss_index_hnsw_cagra_builder.write_cpu_index(
                 faiss_cpu_build_index_output, cpu_index_output_file_path
             )
             t2 = timer()
@@ -150,6 +151,7 @@ class FaissIndexBuildService(IndexBuildService):
                 f"Index write time for vector path {index_build_parameters.vector_path}: "
                 f"{index_write_time:.2f} seconds"
             )
+            return numpy_arr
 
         except Exception as exception:
             # Clean up GPU Index Response if orchestrator failed after GPU Index Creation
