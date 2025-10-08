@@ -146,7 +146,9 @@ def run_tasks(
 
             vectors_dataset.free_vectors_space()
 
-            bytes_array = vector_writer.data
+            bytes_array = vector_writer.data.to_bytes()
+
+            del vector_writer
 
             logger.debug(
                 f"Uploading index for vector path: {index_build_params.vector_path}"
@@ -163,7 +165,6 @@ def run_tasks(
             logger.debug(
                 f"Total upload time for path {index_build_params.vector_path}: {upload_time:.2f} seconds"
             )
-            del vector_writer
 
 
             logger.debug(
@@ -215,10 +216,9 @@ def build_index(
 
     """
     faiss_service = FaissIndexBuildService()
-    numpy_arr = faiss_service.build_index(
+    faiss_service.build_index(
         index_build_params, vectors_dataset, vector_writer, cpu_index_output_file_path
     )
-    return numpy_arr
 
 
 def _determine_streaming_buffer(
