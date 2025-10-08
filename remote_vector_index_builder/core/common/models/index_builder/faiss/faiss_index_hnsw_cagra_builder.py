@@ -180,6 +180,12 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
             logger.info("Start serializing index")
             if self.vector_dtype != DataType.BINARY:
                 faiss.write_index(cpu_build_index_output.index_id_map, vector_writer)
+                logger.info("Sleeping ...")
+                time.sleep(5)
+                logger.info("Performing copy")
+                arr = faiss.vector_to_array(vector_writer.data)
+                logger.info("Sleeping ...")
+                time.sleep(5)
             else:
                 faiss.write_index_binary(cpu_build_index_output.index_id_map, vector_writer)
             logger.info("End serializing index, sleeping")
