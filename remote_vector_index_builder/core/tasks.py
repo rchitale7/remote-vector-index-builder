@@ -146,9 +146,9 @@ def run_tasks(
 
             vectors_dataset.free_vectors_space()
 
-            bytes_array = vector_writer.data.to_bytes()
-
+            bytes_array = faiss.vector_to_array(vector_writer.data)
             del vector_writer
+
 
             logger.debug(
                 f"Uploading index for vector path: {index_build_params.vector_path}"

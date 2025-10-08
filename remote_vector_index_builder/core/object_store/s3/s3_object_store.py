@@ -329,9 +329,13 @@ class S3ObjectStore(ObjectStore):
             # Create transfer config object
             s3_transfer_config = TransferConfig(**self.upload_transfer_config)
             time.sleep(5)
+
+            logger.info("Creating bytes buffer")
+            bytes_buffer = BytesIO(bytes_array)
+            time.sleep(5)
             logger.info("Uploading")
             self.s3_client.upload_fileobj(
-                bytes_array,
+                bytes_buffer,
                 self.bucket,
                 remote_store_path,
                 Config=s3_transfer_config,
