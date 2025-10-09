@@ -170,7 +170,7 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
         """
         arr = None
         try:
-            logger.info("Serializing index...")
+            logger.info("Graph is now in memory, starting serialization...")
             time.sleep(5)
             if self.vector_dtype != DataType.BINARY:
                 logger.info("Writing the index...")
