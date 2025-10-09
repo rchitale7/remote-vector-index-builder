@@ -96,7 +96,6 @@ def run_tasks(
         if object_store_config is None:
             object_store_config = {}
 
-        vector_writer = faiss.VectorIOWriter()
         vectors_dataset = None
         try:
             logger.debug(
@@ -132,11 +131,9 @@ def run_tasks(
             )
 
             t1 = timer()
-            build_index(
+            bytes_array = build_index(
                 index_build_params=index_build_params,
                 vectors_dataset=vectors_dataset,
-                vector_writer=vector_writer,
-                cpu_index_output_file_path=index_local_path,
             )
             t2 = timer()
             build_time = t2 - t1
@@ -145,9 +142,6 @@ def run_tasks(
             )
 
             vectors_dataset.free_vectors_space()
-
-            bytes_array = faiss.vector_to_array(vector_writer.data)
-            del vector_writer
 
 
             logger.debug(
@@ -186,8 +180,6 @@ def run_tasks(
 def build_index(
     index_build_params: IndexBuildParameters,
     vectors_dataset: VectorsDataset,
-    vector_writer: faiss.VectorIOWriter,
-    cpu_index_output_file_path: str,
 ) -> np.ndarray:
     """Builds an index using the provided vectors dataset and parameters.
 
@@ -216,8 +208,8 @@ def build_index(
 
     """
     faiss_service = FaissIndexBuildService()
-    faiss_service.build_index(
-        index_build_params, vectors_dataset, vector_writer, cpu_index_output_file_path
+    return faiss_service.build_index(
+        index_build_params, vectors_dataset
     )
 
 
@@ -312,7 +304,6 @@ def upload_index(
         index_build_params (IndexBuildParameters): Parameters for the index build process,
             containing the vector path which is used to determine the upload destination
         object_store (ObjectStore): Object Store instance
-        index_local_path (str): Local filesystem path where the built index is stored
 
     Returns:
         None
@@ -322,7 +313,6 @@ def upload_index(
         - Uses the vector_path from index_build_params to determine the upload destination
             - The upload destination has the same file path as the vector_path
               except for the file extension. The file extension is based on the engine
-        - The index_local_path must exist and be readable
         - The function assumes index_build_params has already been validated by Pydantic
 
     Raises:

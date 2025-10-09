@@ -296,7 +296,6 @@ class S3ObjectStore(ObjectStore):
         Uploads a local file to S3, with retry logic.
 
         Args:
-            local_file_path (str): Path to the local file to be uploaded
             remote_store_path (str): The S3 key (path) where the file will be stored
 
         Returns:
@@ -328,12 +327,9 @@ class S3ObjectStore(ObjectStore):
         try:
             # Create transfer config object
             s3_transfer_config = TransferConfig(**self.upload_transfer_config)
-            time.sleep(5)
-
-            logger.info("Creating bytes buffer")
+            logger.info("Creating bytes buffer - this results in the buffer being copied")
             bytes_buffer = BytesIO(bytes_array)
             time.sleep(5)
-            logger.info("Uploading")
             self.s3_client.upload_fileobj(
                 bytes_buffer,
                 self.bucket,
@@ -342,7 +338,6 @@ class S3ObjectStore(ObjectStore):
                 Callback=callback_func,
                 ExtraArgs=self.upload_args,
             )
-            logger.info("End upload")
             return
         except TypeError as e:
             raise BlobError(f"Error calling boto3.upload_file: {e}") from e

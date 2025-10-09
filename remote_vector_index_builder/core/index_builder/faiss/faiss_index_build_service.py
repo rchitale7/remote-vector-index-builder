@@ -43,9 +43,7 @@ class FaissIndexBuildService(IndexBuildService):
         self,
         index_build_parameters: IndexBuildParameters,
         vectors_dataset: VectorsDataset,
-        vector_writer: faiss.VectorIOWriter,
-        cpu_index_output_file_path: str,
-    ):
+    ) -> np.ndarray:
         """
         Orchestrates the workflow of
         - creating a GPU Index for the specified vectors dataset,
@@ -143,9 +141,8 @@ class FaissIndexBuildService(IndexBuildService):
 
             # Step 3: Write CPU Index to persistent storage
             t1 = timer()
-            logger.info("Start getting numpy array")
-            faiss_index_hnsw_cagra_builder.write_cpu_index(
-                vector_writer, faiss_cpu_build_index_output, cpu_index_output_file_path
+            arr = faiss_index_hnsw_cagra_builder.write_cpu_index(
+                faiss_cpu_build_index_output
             )
             t2 = timer()
             index_write_time = t2 - t1
@@ -153,8 +150,7 @@ class FaissIndexBuildService(IndexBuildService):
                 f"Index write time for vector path {index_build_parameters.vector_path}: "
                 f"{index_write_time:.2f} seconds"
             )
-            logger.info("End getting numpy array")
-            return
+            return arr
 
         except Exception as exception:
             # Clean up GPU Index Response if orchestrator failed after GPU Index Creation

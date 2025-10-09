@@ -42,9 +42,7 @@ class FaissCPUIndexBuilder(ABC):
     @abstractmethod
     def write_cpu_index(
         self,
-        vector_writer,
-        cpu_build_index_output: FaissCpuBuildIndexOutput,
-        cpu_index_output_file_path: str,
+        cpu_build_index_output: FaissCpuBuildIndexOutput
     ):
         """
         Implement this abstract method to write the cpu index to specified output file path

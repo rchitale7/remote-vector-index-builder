@@ -156,9 +156,7 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
 
     def write_cpu_index(
         self,
-        vector_writer: faiss.VectorIOWriter,
-        cpu_build_index_output: FaissCpuBuildIndexOutput,
-        cpu_index_output_file_path: str,
+        cpu_build_index_output: FaissCpuBuildIndexOutput
     ):
         """
         Method to write the CPU index and vector dataset id mapping to persistent local file path
@@ -170,33 +168,29 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
         and dataset Vector Ids components
         cpu_index_output_file_path (str): File path to persist Index-Vector IDs map to
         """
+        arr = None
         try:
-
-            # TODO: Investigate what issues may arise while writing index to local file
-            # Write the final cpu index - vectors id mapping to disk
-            logger.info("In method...")
-            logger.info("Sleeping ...")
+            logger.info("Serializing index...")
             time.sleep(5)
-            logger.info("Start serializing index")
             if self.vector_dtype != DataType.BINARY:
+                logger.info("Writing the index...")
+                vector_writer = faiss.VectorIOWriter()
                 faiss.write_index(cpu_build_index_output.index_id_map, vector_writer)
-                logger.info("Sleeping ...")
                 time.sleep(5)
-                logger.info("Performing copy")
+                logger.info("Copying the index to numpy array ...")
                 arr = faiss.vector_to_array(vector_writer.data)
-                logger.info("Sleeping ...")
                 time.sleep(5)
             else:
+                vector_writer = faiss.VectorIOWriter()
                 faiss.write_index_binary(cpu_build_index_output.index_id_map, vector_writer)
-            logger.info("End serializing index, sleeping")
-            time.sleep(5)
+                arr = faiss.vector_to_array(vector_writer.data)
+            logger.info("Cleaning up the cpu graph object ...")
             cpu_build_index_output.cleanup()
-            logger.info("Clean up done, sleeping")
             time.sleep(5)
-            return
+            return arr
         except IOError as io_error:
             raise Exception(
-                f"Failed to write index to file {cpu_index_output_file_path}: {str(io_error)}"
+                f"Failed to write index to file: {str(io_error)}"
             ) from io_error
         except Exception as e:
             raise Exception(

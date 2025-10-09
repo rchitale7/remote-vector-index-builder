@@ -6,6 +6,7 @@
 # compatible open source license.
 
 from abc import ABC, abstractmethod
+import numpy as np
 
 from core.common.models import VectorsDataset, IndexBuildParameters
 
@@ -21,9 +22,7 @@ class IndexBuildService(ABC):
         self,
         index_build_parameters: IndexBuildParameters,
         vectors_dataset: VectorsDataset,
-        vector_writer,
-        cpu_index_output_file_path: str,
-    ) -> None:
+    ) -> np.ndarray:
         """
         Implement this abstract method orchestrating an index build for the specified vectors dataset
         and input index build parameters
