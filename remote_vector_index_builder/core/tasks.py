@@ -36,6 +36,7 @@ from timeit import default_timer as timer
 import traceback
 from typing import Any, Dict, Optional
 import numpy as np
+import time
 
 from core.common.models import IndexBuildParameters
 from core.common.models import VectorsDataset
@@ -142,6 +143,8 @@ def run_tasks(
             )
 
             vectors_dataset.free_vectors_space()
+            logger.info("Vectors are now freed, memory should just have the serialized graph now..")
+            time.sleep(5)
 
 
             logger.debug(
