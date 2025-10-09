@@ -143,8 +143,6 @@ def run_tasks(
             )
 
             vectors_dataset.free_vectors_space()
-            logger.info("Vectors are now freed, memory should just have the serialized graph now..")
-            time.sleep(5)
 
 
             logger.debug(
