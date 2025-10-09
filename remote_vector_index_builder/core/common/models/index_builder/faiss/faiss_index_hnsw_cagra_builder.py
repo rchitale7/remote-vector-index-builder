@@ -174,7 +174,7 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
             time.sleep(5)
             if self.vector_dtype != DataType.BINARY:
                 logger.info("Writing the index...")
-                vector_writer = faiss.BufferedIOWriter(faiss.VectorIOWriter)
+                vector_writer = faiss.BufferedIOWriter(faiss.VectorIOWriter())
                 faiss.write_index(cpu_build_index_output.index_id_map, vector_writer)
                 time.sleep(5)
                 logger.info("Copying the index to numpy array ...")
