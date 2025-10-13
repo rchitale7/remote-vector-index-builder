@@ -324,8 +324,8 @@ class S3ObjectStore(ObjectStore):
 
             callback_func = callback
 
-        logger.info("Uploading to s3")
-        time.sleep(5)
+        # logger.info("Uploading to s3")
+        # time.sleep(5)
         try:
             # Create transfer config object
             s3_transfer_config = TransferConfig(**self.upload_transfer_config)

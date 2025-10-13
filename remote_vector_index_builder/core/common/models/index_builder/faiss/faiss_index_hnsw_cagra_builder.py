@@ -173,8 +173,8 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
         index_buffer = io.BytesIO()
         writer = faiss.PyCallbackIOWriter(index_buffer.write)
         try:
-            logger.info("Graph is now in memory, starting serialization...")
-            time.sleep(5)
+            # logger.info("Graph is now in memory, starting serialization...")
+            # time.sleep(5)
             if self.vector_dtype != DataType.BINARY:
                 faiss.write_index(cpu_build_index_output.index_id_map, writer)
             #     logger.info("Writing the index...")
@@ -190,10 +190,10 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
                 # faiss.write_index_binary(cpu_build_index_output.index_id_map, vector_writer)
                 # arr = faiss.vector_to_array(vector_writer.data)
             
-            time.sleep(5)
-            logger.info("Cleaning up the cpu graph object ...")
+            # time.sleep(5)
+            # logger.info("Cleaning up the cpu graph object ...")
             cpu_build_index_output.cleanup()
-            time.sleep(5)
+            # time.sleep(5)
             return index_buffer
         except IOError as io_error:
             raise Exception(
