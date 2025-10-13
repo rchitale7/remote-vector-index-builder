@@ -16,6 +16,7 @@ from core.common.models.index_builder import (
     FaissCPUIndexBuilder,
 )
 import time
+import io
 
 from remote_vector_index_builder.core.common.models.index_build_parameters import (
     DataType,
@@ -154,6 +155,7 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
 
         return self._do_convert_gpu_to_cpu_binary_index(faiss_gpu_build_index_output)
 
+
     def write_cpu_index(
         self,
         cpu_build_index_output: FaissCpuBuildIndexOutput
@@ -168,26 +170,31 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
         and dataset Vector Ids components
         cpu_index_output_file_path (str): File path to persist Index-Vector IDs map to
         """
-        arr = None
+        index_buffer = io.BytesIO()
+        writer = faiss.PyCallbackIOWriter(index_buffer.write)
         try:
             logger.info("Graph is now in memory, starting serialization...")
             time.sleep(5)
             if self.vector_dtype != DataType.BINARY:
-                logger.info("Writing the index...")
-                vector_writer = faiss.BufferedIOWriter(faiss.VectorIOWriter())
-                faiss.write_index(cpu_build_index_output.index_id_map, vector_writer)
-                time.sleep(5)
-                logger.info("Copying the index to numpy array ...")
-                arr = faiss.vector_to_array(vector_writer.data)
-                time.sleep(5)
+                faiss.write_index(cpu_build_index_output.index_id_map, writer)
+            #     logger.info("Writing the index...")
+            #     vector_writer = faiss.BufferedIOWriter(faiss.VectorIOWriter())
+            #     faiss.write_index(cpu_build_index_output.index_id_map, vector_writer)
+            #     time.sleep(5)
+            #     logger.info("Copying the index to numpy array ...")
+            #     arr = faiss.vector_to_array(vector_writer.data)
+            #     time.sleep(5)
             else:
-                vector_writer = faiss.VectorIOWriter()
-                faiss.write_index_binary(cpu_build_index_output.index_id_map, vector_writer)
-                arr = faiss.vector_to_array(vector_writer.data)
+                faiss.write_index(cpu_build_index_output.index_id_map, writer)
+                # vector_writer = faiss.VectorIOWriter()
+                # faiss.write_index_binary(cpu_build_index_output.index_id_map, vector_writer)
+                # arr = faiss.vector_to_array(vector_writer.data)
+            
+            time.sleep(5)
             logger.info("Cleaning up the cpu graph object ...")
             cpu_build_index_output.cleanup()
             time.sleep(5)
-            return arr
+            return index_buffer
         except IOError as io_error:
             raise Exception(
                 f"Failed to write index to file: {str(io_error)}"

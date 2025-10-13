@@ -324,15 +324,13 @@ class S3ObjectStore(ObjectStore):
 
             callback_func = callback
 
+        logger.info("Uploading to s3")
+        time.sleep(5)
         try:
             # Create transfer config object
             s3_transfer_config = TransferConfig(**self.upload_transfer_config)
-            logger.info("Creating bytes buffer - this results in the buffer being copied")
-            bytes_buffer = BytesIO(bytes_array)
-            time.sleep(5)
-            logger.info("Done creating bytes buffer, now uploading to s3")
             self.s3_client.upload_fileobj(
-                bytes_buffer,
+                bytes_array,
                 self.bucket,
                 remote_store_path,
                 Config=s3_transfer_config,
