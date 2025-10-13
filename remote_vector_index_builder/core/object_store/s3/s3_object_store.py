@@ -326,6 +326,7 @@ class S3ObjectStore(ObjectStore):
 
         # logger.info("Uploading to s3")
         # time.sleep(5)
+        bytes_array.seek(0)
         try:
             # Create transfer config object
             s3_transfer_config = TransferConfig(**self.upload_transfer_config)
