@@ -7,12 +7,13 @@
 
 import faiss
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Dict, Any, Union
 from core.common.models.index_builder import (
     FaissCpuBuildIndexOutput,
     FaissGpuBuildIndexOutput,
     FaissCPUIndexBuilder,
 )
+from io import BytesIO
 
 from remote_vector_index_builder.core.common.models.index_build_parameters import (
     DataType,
@@ -153,37 +154,41 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
     def write_cpu_index(
         self,
         cpu_build_index_output: FaissCpuBuildIndexOutput,
-        cpu_index_output_file_path: str,
+        output_destination: Union[str, BytesIO],
     ) -> None:
         """
-        Method to write the CPU index and vector dataset id mapping to persistent local file path
+        Method to write the CPU index and vector dataset id mapping to storage destination,
         for uploading later to remote object store.
         Uses faiss write_index library method to achieve this
 
         Args:
         cpu_build_index_output (FaissCpuBuildIndexOutput): A datamodel containing the created GPU Faiss Index
         and dataset Vector Ids components
-        cpu_index_output_file_path (str): File path to persist Index-Vector IDs map to
+        output_destination (Union[str, BytesIO]): Output destination for the index.
+            - str: File path for disk writing
+            - BytesIO: Existing buffer to write to
         """
         try:
-
-            # TODO: Investigate what issues may arise while writing index to local file
-            # Write the final cpu index - vectors id mapping to disk
-            if self.vector_dtype != DataType.BINARY:
-                faiss.write_index(
-                    cpu_build_index_output.index_id_map, cpu_index_output_file_path
-                )
+            writer = None
+            if isinstance(output_destination, BytesIO):
+                # Use a faiss callback to serialize directly to the buffer
+                # We use a faiss callback instead of faiss.serialize_index
+                # to avoid the extra memory overhead of the c++ vector data structure
+                # and numpy arrays created in serialize_index method
+                writer = faiss.PyCallbackIOWriter(output_destination.write)
             else:
-                faiss.write_index_binary(
-                    cpu_build_index_output.index_id_map, cpu_index_output_file_path
-                )
+                # Otherwise, treat the output destination like a file path
+                writer = output_destination
+            self._do_write_index(cpu_build_index_output.index_id_map, writer)
             # Free memory taken by CPU Index
             cpu_build_index_output.cleanup()
         except IOError as io_error:
-            raise Exception(
-                f"Failed to write index to file {cpu_index_output_file_path}: {str(io_error)}"
-            ) from io_error
+            raise Exception(f"Failed to write index: {str(io_error)}") from io_error
         except Exception as e:
-            raise Exception(
-                f"Unexpected error while writing index to file: {str(e)}"
-            ) from e
+            raise Exception(f"Unexpected error while writing index: {str(e)}") from e
+
+    def _do_write_index(self, index_id_map, output_destination):
+        if self.vector_dtype != DataType.BINARY:
+            faiss.write_index(index_id_map, output_destination)
+        else:
+            faiss.write_index_binary(index_id_map, output_destination)
