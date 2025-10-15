@@ -24,6 +24,8 @@ from core.common.models.index_builder import CagraGraphBuildAlgo
 from core.index_builder.interface import IndexBuildService
 from timeit import default_timer as timer
 
+from typing import Union
+from io import BytesIO
 import logging
 
 logger = logging.getLogger(__name__)
@@ -42,7 +44,7 @@ class FaissIndexBuildService(IndexBuildService):
         self,
         index_build_parameters: IndexBuildParameters,
         vectors_dataset: VectorsDataset,
-        cpu_index_output_file_path: str,
+        output_destination: Union[BytesIO, str],
     ) -> None:
         """
         Orchestrates the workflow of
@@ -54,7 +56,8 @@ class FaissIndexBuildService(IndexBuildService):
         Args:
             vectors_dataset: The set of vectors to index
             index_build_parameters: The API Index Build parameters
-            cpu_index_output_file_path: The complete file path on disc to write the cpuIndex to.
+            output_destination: The output destination - either a file path (str) or
+                buffer (BytesIO) to write the graph to
         """
         faiss_gpu_index_cagra_builder = None
         faiss_index_hnsw_cagra_builder = None
@@ -139,10 +142,10 @@ class FaissIndexBuildService(IndexBuildService):
                 f"{index_conversion_time:.2f} seconds"
             )
 
-            # Step 3: Write CPU Index to persistent storage
+            # Step 3: Write CPU Index to output destination
             t1 = timer()
             faiss_index_hnsw_cagra_builder.write_cpu_index(
-                faiss_cpu_build_index_output, cpu_index_output_file_path
+                faiss_cpu_build_index_output, output_destination
             )
             t2 = timer()
             index_write_time = t2 - t1

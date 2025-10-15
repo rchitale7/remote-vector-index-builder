@@ -10,6 +10,8 @@ from core.common.models.index_builder import (
     FaissCpuBuildIndexOutput,
     FaissGpuBuildIndexOutput,
 )
+from typing import Union
+from io import BytesIO
 
 
 class FaissCPUIndexBuilder(ABC):
@@ -42,7 +44,7 @@ class FaissCPUIndexBuilder(ABC):
     def write_cpu_index(
         self,
         cpu_build_index_output: FaissCpuBuildIndexOutput,
-        cpu_index_output_file_path: str,
+        output_destination: Union[str, BytesIO],
     ) -> None:
         """
         Implement this abstract method to write the cpu index to specified output file path
@@ -50,6 +52,8 @@ class FaissCPUIndexBuilder(ABC):
         Args:
         cpu_build_index_output (FaissCpuBuildIndexOutput): A datamodel containing the created GPU Faiss Index
         and dataset Vector Ids components
-        cpu_index_output_file_path (str): File path to persist Index-Vector IDs map to
+        output_destination (Union[str, BytesIO]): Output destination for the index.
+            - str: File path for disk writing
+            - BytesIO: Existing buffer to write to
         """
         pass
