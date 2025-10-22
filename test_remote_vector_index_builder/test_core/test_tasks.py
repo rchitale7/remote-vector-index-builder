@@ -24,7 +24,7 @@ from core.common.exceptions import BlobError
 from core.common.models.vectors_dataset import VectorsDataset
 from core.object_store.object_store import ObjectStore
 from core.common.models.index_build_parameters import DataType
-from core.common.models.index_build_parameters import IndexStorageMode
+from core.common.models.index_build_parameters import IndexSerializationMode
 
 
 @pytest.fixture
@@ -248,7 +248,7 @@ def test_build_index_failure(
 def test_memory_mode():
     with tempfile.TemporaryDirectory() as temp_dir:
         with index_storage_context(
-            IndexStorageMode.MEMORY, temp_dir, "test.knnvec"
+            IndexSerializationMode.MEMORY, temp_dir, "test.knnvec"
         ) as storage:
             assert isinstance(storage, BytesIO)
             # simulate writing to buffer
@@ -261,7 +261,7 @@ def test_memory_mode():
 def test_disk_mode():
     with tempfile.TemporaryDirectory() as temp_dir:
         with index_storage_context(
-            IndexStorageMode.DISK, temp_dir, "sub/test.knnvec"
+            IndexSerializationMode.DISK, temp_dir, "sub/test.knnvec"
         ) as storage:
             assert isinstance(storage, str)
             # simulate writing to file

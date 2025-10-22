@@ -38,7 +38,7 @@ from contextlib import contextmanager
 
 
 from core.common.models import IndexBuildParameters
-from core.common.models.index_build_parameters import IndexStorageMode
+from core.common.models.index_build_parameters import IndexSerializationMode
 from core.common.models import VectorsDataset
 from core.index_builder.faiss.faiss_index_build_service import FaissIndexBuildService
 from core.object_store.object_store_factory import ObjectStoreFactory
@@ -99,7 +99,7 @@ def run_tasks(
         BytesIO() as vector_buffer,
         BytesIO() as doc_id_buffer,
         index_storage_context(
-            index_build_params.index_storage_mode,
+            index_build_params.index_serialization_mode,
             temp_dir,
             index_build_params.vector_path,
         ) as index_storage,
@@ -342,10 +342,10 @@ def upload_index(
 
 @contextmanager
 def index_storage_context(
-    storage_mode: IndexStorageMode, temp_dir: str, vector_path: str
+    storage_mode: IndexSerializationMode, temp_dir: str, vector_path: str
 ):
     """Context manager for index storage setup and cleanup."""
-    if storage_mode == IndexStorageMode.MEMORY:
+    if storage_mode == IndexSerializationMode.MEMORY:
         logger.debug(
             f"Build is configured to store index in memory for vector path {vector_path}"
         )

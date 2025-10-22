@@ -43,7 +43,7 @@ def index_build_parameters():
 def memory_storage_mode_index_build_parameters():
     """Create sample IndexBuildParameters for testing"""
     return IndexBuildParameters(
-        index_storage_mode="memory",
+        index_serialization_mode="memory",
         container_name="testbucket",
         vector_path="vec.knnvec",
         doc_id_path="doc.knndid",

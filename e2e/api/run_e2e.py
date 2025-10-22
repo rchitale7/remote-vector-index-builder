@@ -13,7 +13,11 @@ import time
 import sys
 import os
 from botocore.exceptions import ClientError
-from core.common.models.index_build_parameters import DataType, Engine, IndexStorageMode
+from core.common.models.index_build_parameters import (
+    DataType,
+    Engine,
+    IndexSerializationMode,
+)
 from core.object_store.types import ObjectStoreType
 from e2e.api.remote_vector_api_client import RemoteVectorAPIClient
 from e2e.api.utils.logging_config import configure_logger
@@ -39,11 +43,11 @@ def run_e2e_index_builder(config_path: str = "e2e/api/test-datasets.yml"):
             dataset_config = dataset_generator.config["datasets"][dataset_name]
             s3_config = dataset_generator.config["storage"]["s3"]
 
-            index_storage_mode = dataset_config.get(
-                "index_storage_mode", IndexStorageMode.DISK
+            index_serialization_mode = dataset_config.get(
+                "index_serialization_mode", IndexSerializationMode.DISK
             )
             index_build_params = {
-                "index_storage_mode": index_storage_mode,
+                "index_serialization_mode": index_serialization_mode,
                 "vector_path": s3_config["paths"]["vectors"].format(
                     dataset_name=dataset_name
                 ),

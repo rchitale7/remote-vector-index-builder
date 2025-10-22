@@ -121,7 +121,7 @@ class IndexParameters(BaseModel):
     )
 
 
-class IndexStorageMode(str, Enum):
+class IndexSerializationMode(str, Enum):
     """Storage mode for the constructed vector index
 
     Attributes:
@@ -140,7 +140,7 @@ class IndexBuildParameters(BaseModel):
     including data source information, vector specifications, and index configuration.
 
     Attributes:
-        index_storage_mode (IndexStorageMode): The storage location for
+        index_serialization_mode (IndexSerializationMode): The storage location for
             the constructed vector index. Defaults to disk
         repository_type (str): The type of repository where the vector data is stored.
             Defaults to s3
@@ -162,7 +162,7 @@ class IndexBuildParameters(BaseModel):
         ensuring strict parameter validation.
     """
 
-    index_storage_mode: IndexStorageMode = IndexStorageMode.DISK
+    index_serialization_mode: IndexSerializationMode = IndexSerializationMode.DISK
     repository_type: ObjectStoreType = ObjectStoreType.S3
     container_name: str
     vector_path: VectorPathRegex
