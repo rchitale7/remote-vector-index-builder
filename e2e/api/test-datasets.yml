@@ -11,7 +11,6 @@ datasets:
       normalize: true
 
   test-dataset-384:
-    index_serialization_mode: "memory"
     dimension: 384
     num_vectors: 1_000_000
     num_queries: 50_000

@@ -15,8 +15,7 @@ import os
 from botocore.exceptions import ClientError
 from core.common.models.index_build_parameters import (
     DataType,
-    Engine,
-    IndexSerializationMode,
+    Engine
 )
 from core.object_store.types import ObjectStoreType
 from e2e.api.remote_vector_api_client import RemoteVectorAPIClient
@@ -42,11 +41,6 @@ def run_e2e_index_builder(config_path: str = "e2e/api/test-datasets.yml"):
 
             dataset_config = dataset_generator.config["datasets"][dataset_name]
             s3_config = dataset_generator.config["storage"]["s3"]
-
-            index_serialization_mode = dataset_config.get(
-                "index_serialization_mode", IndexSerializationMode.DISK
-            )
-            os.environ["INDEX_SERIALIZATION_MODE"] = index_serialization_mode
 
             index_build_params = {
                 "vector_path": s3_config["paths"]["vectors"].format(
