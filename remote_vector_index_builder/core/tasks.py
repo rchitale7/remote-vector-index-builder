@@ -37,9 +37,11 @@ from typing import Any, Dict, Optional, Union
 from contextlib import contextmanager
 
 
-from core.common.models import IndexBuildParameters
-from core.common.models.index_build_parameters import IndexSerializationMode
-from core.common.models import VectorsDataset
+from core.common.models import (
+    IndexBuildParameters,
+    IndexSerializationMode,
+    VectorsDataset,
+)
 from core.index_builder.faiss.faiss_index_build_service import FaissIndexBuildService
 from core.object_store.object_store_factory import ObjectStoreFactory
 
@@ -72,6 +74,7 @@ class TaskResult:
 def run_tasks(
     index_build_params: IndexBuildParameters,
     object_store_config: Optional[Dict[str, Any]] = None,
+    index_serialization_mode: IndexSerializationMode = IndexSerializationMode.DISK,
 ) -> TaskResult:
     """Execute the index building tasks using the provided parameters.
 
@@ -87,6 +90,8 @@ def run_tasks(
             including vector path and other configuration settings.
         object_store_config (Dict[str, Any], optional): Configuration settings for the
             object store. Defaults to None, in which case an empty dictionary is used.
+        index_serialization_mode (IndexSerializationMode): The storage location for
+            the constructed vector index. Defaults to disk
 
     Returns:
         TaskResult: An object containing either:
@@ -99,7 +104,7 @@ def run_tasks(
         BytesIO() as vector_buffer,
         BytesIO() as doc_id_buffer,
         index_storage_context(
-            index_build_params.index_serialization_mode,
+            index_serialization_mode,
             temp_dir,
             index_build_params.vector_path,
         ) as index_storage,

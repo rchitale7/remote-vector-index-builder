@@ -46,8 +46,9 @@ def run_e2e_index_builder(config_path: str = "e2e/api/test-datasets.yml"):
             index_serialization_mode = dataset_config.get(
                 "index_serialization_mode", IndexSerializationMode.DISK
             )
+            os.environ["INDEX_SERIALIZATION_MODE"] = index_serialization_mode
+
             index_build_params = {
-                "index_serialization_mode": index_serialization_mode,
                 "vector_path": s3_config["paths"]["vectors"].format(
                     dataset_name=dataset_name
                 ),

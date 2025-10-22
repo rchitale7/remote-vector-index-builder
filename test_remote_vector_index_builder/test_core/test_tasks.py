@@ -175,7 +175,7 @@ def test_successful_task_execution(
 
 
 def test_successful_task_execution_with_memory_storage_mode(
-    memory_storage_mode_index_build_parameters,
+    index_build_parameters,
     mock_vectors_dataset,
     object_store_config,
 ):
@@ -189,7 +189,7 @@ def test_successful_task_execution_with_memory_storage_mode(
 
         # Execute function
         result = run_tasks(
-            memory_storage_mode_index_build_parameters, object_store_config
+            index_build_parameters, object_store_config, IndexSerializationMode.MEMORY
         )
 
         # Verify success
