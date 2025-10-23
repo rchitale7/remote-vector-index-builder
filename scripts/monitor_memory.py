@@ -96,7 +96,7 @@ class MemoryMonitor:
             logging.info(f"Max system GPU Memory: ,{max_memory}")
             logging.info(f"Net system GPU Memory used:, {max_memory-start_memory}")
 
-            df.to_csv(f'gpu_stats_{self.identifier}.csv')
+            df.to_csv(f'./gpu_stats_{self.identifier}.csv')
             return max_memory, start_memory, end_memory
         return 0, 0, 0
 
@@ -111,7 +111,7 @@ class MemoryMonitor:
         logging.info(f"Max CPU Memory: ,{max_memory}")
         logging.info(f"Net CPU Memory used:, {max_memory-start_memory}")
 
-        df.to_csv(f'cpu_stats_{self.identifier}.csv')
+        df.to_csv(f'./cpu_stats_{self.identifier}.csv')
 
         return max_memory, start_memory, end_memory
 
