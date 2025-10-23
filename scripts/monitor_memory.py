@@ -91,10 +91,10 @@ class MemoryMonitor:
             max_memory = df["gpu_used_system_memory"].max()
             start_memory = df["gpu_used_system_memory"].iloc[0]
             end_memory = df["gpu_used_system_memory"].iloc[-1]
-            logging.debug(f"Start system GPU Memory: ,{start_memory}")
-            logging.debug(f"End system GPU Memory: ,{end_memory}")
-            logging.debug(f"Max system GPU Memory: ,{max_memory}")
-            logging.debug(f"Net system GPU Memory used:, {max_memory-start_memory}")
+            logging.info(f"Start system GPU Memory: ,{start_memory}")
+            logging.info(f"End system GPU Memory: ,{end_memory}")
+            logging.info(f"Max system GPU Memory: ,{max_memory}")
+            logging.info(f"Net system GPU Memory used:, {max_memory-start_memory}")
 
             df.to_csv(f'gpu_stats_{self.identifier}.csv')
             return max_memory, start_memory, end_memory
@@ -106,10 +106,10 @@ class MemoryMonitor:
         max_memory = df["cpu_used_system_memory"].max()
         start_memory = df["cpu_used_system_memory"].iloc[0]
         end_memory = df["cpu_used_system_memory"].iloc[-1]
-        logging.debug(f"Start CPU Memory: ,{start_memory}")
-        logging.debug(f"End CPU Memory: ,{end_memory}")
-        logging.debug(f"Max CPU Memory: ,{max_memory}")
-        logging.debug(f"Net CPU Memory used:, {max_memory-start_memory}")
+        logging.info(f"Start CPU Memory: ,{start_memory}")
+        logging.info(f"End CPU Memory: ,{end_memory}")
+        logging.info(f"Max CPU Memory: ,{max_memory}")
+        logging.info(f"Net CPU Memory used:, {max_memory-start_memory}")
 
         df.to_csv(f'cpu_stats_{self.identifier}.csv')
 
