@@ -12,7 +12,6 @@ from app.models.workflow import BuildWorkflow
 from core.object_store.s3.s3_object_store_config import S3ClientConfig
 from core.common.models import IndexSerializationMode
 from core.tasks import run_tasks
-from core.profile.memory_monitor import MemoryMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +40,6 @@ class IndexBuilder:
         index_serialization_mode = os.environ.get(
             "INDEX_SERIALIZATION_MODE", IndexSerializationMode.DISK
         )
-        monitor = MemoryMonitor(workflow.index_build_parameters.vector_path)
-        monitor.start_monitoring()
         result = run_tasks(
             workflow.index_build_parameters,
             {
@@ -53,9 +50,6 @@ class IndexBuilder:
             },
             index_serialization_mode,
         )
-        monitor.stop_monitoring()
-        monitor.log_system_cpu_metrics()
-        monitor.log_system_gpu_metrics()
 
         if not result.file_name:
             return False, None, result.error

@@ -12,7 +12,6 @@ class MemoryMonitor:
         self.interval = interval
         self.cpu_memory_logs = []
         self.start_time = None
-        self.ram_used_mb: List[float] = []
         self.timestamps: List[float] = []
         self.is_monitoring = False
         self._monitor_thread = None
@@ -73,12 +72,8 @@ class MemoryMonitor:
                     "id": self.id,
                 }
             )
-            self.ram_used_mb.append(self._get_process_memory_mb())
-            time.sleep(self.interval)  # sampling rate
 
-    def _get_process_memory_mb(self) -> float:
-        """Get current process memory usage in KB"""
-        return self.process.memory_info().rss / (1024**2)  # Convert bytes to MB
+            time.sleep(self.interval)  # sampling rate
 
     def start_monitoring(self):
         """Start GPU memory monitoring"""
@@ -119,6 +114,8 @@ class MemoryMonitor:
         logging.info(f"End CPU Memory: ,{end_memory}")
         logging.info(f"Max CPU Memory: ,{max_memory}")
         logging.info(f"Net CPU Memory used:, {max_memory-start_memory}")
+
+        df.to_csv(f'cpu_memory_{self.filename}.csv')
         return max_memory, start_memory, end_memory
 
     def __del__(self):

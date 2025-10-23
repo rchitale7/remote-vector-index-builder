@@ -12,12 +12,11 @@ import threading
 import pandas as pd
 import time
 import logging
-import os
+import argparse
 
-logger = logging.getLogger(__name__)
 
 class MemoryMonitor:
-    def __init__(self, filename, interval: float = 0.1, monitor_gpu=True):
+    def __init__(self, identifier, interval: float = 0.1, monitor_gpu=True):
         self.interval = interval
         self.cpu_memory_logs = []
         self.gpu_memory_logs = []
@@ -25,7 +24,7 @@ class MemoryMonitor:
         self.is_monitoring = False
         self._monitor_thread = None
         self.process = psutil.Process()
-        self.filename = filename.split("/")[-1]
+        self.identifier = identifier
 
         # Initialize GPU monitoring
         if monitor_gpu:
@@ -47,38 +46,6 @@ class MemoryMonitor:
         info = nvidia_smi.nvmlDeviceGetMemoryInfo(self.handle)
         return info.used / 1024 / 1024
 
-    def _get_cpu_process_memory_info(self) -> float:
-        """Get current process memory usage in MB"""
-        return self.process.memory_info().rss / (1024**2)  # Convert bytes to MB
-
-    def _get_gpu_process_memory_info(self):
-        """"Aggregate GPU processes memory usage in MB"""
-        compute_procs = nvidia_smi.nvmlDeviceGetComputeRunningProcesses(self.gpu_id)
-        process_logs = []
-        total_memory = 0
-        if compute_procs:
-            for p in compute_procs:
-                used_memory = p.usedGpuMemory / 1024 / 1024
-                process_logs.append(
-                    {
-                        "pid": p.pid,
-                        "name": self._get_process_name(p.pid),
-                        "used_memory": used_memory
-                    }
-                )
-                total_memory += used_memory
-
-        return process_logs, total_memory
-
-    def _get_process_name(self, pid):
-        """Get the name of a process given its PID."""
-        try:
-            process = psutil.Process(pid)
-            return process.name()
-        except psutil.NoSuchProcess:
-            return "Unknown"
-
-
     def _monitoring_loop(self):
         """Background monitoring loop"""
         while self.is_monitoring:
@@ -94,12 +61,10 @@ class MemoryMonitor:
                     }
                 )
 
-            process_cpu_mb = self._get_cpu_process_memory_info()
             system_cpu_mb = self._get_cpu_system_memory_info()
             self.cpu_memory_logs.append(
                 {
                     "cpu_used_system_memory": system_cpu_mb,
-                    "cpu_used_process_memory": process_cpu_mb,
                     "cur_time": cur_time
                 }
             )
@@ -126,14 +91,12 @@ class MemoryMonitor:
             max_memory = df["gpu_used_system_memory"].max()
             start_memory = df["gpu_used_system_memory"].iloc[0]
             end_memory = df["gpu_used_system_memory"].iloc[-1]
-            logger.debug(f"Start system GPU Memory: ,{start_memory}")
-            logger.debug(f"End system GPU Memory: ,{end_memory}")
-            logger.debug(f"Max system GPU Memory: ,{max_memory}")
-            logger.debug(f"Net system GPU Memory used:, {max_memory-start_memory}")
+            logging.debug(f"Start system GPU Memory: ,{start_memory}")
+            logging.debug(f"End system GPU Memory: ,{end_memory}")
+            logging.debug(f"Max system GPU Memory: ,{max_memory}")
+            logging.debug(f"Net system GPU Memory used:, {max_memory-start_memory}")
 
-            # If you want to save the logs to a csv, uncomment this line
-            # and attach a mountpoint to the docker container /files directory
-            # df.to_csv(f'/files/gpu_metrics_{self.filename}.csv')
+            df.to_csv(f'gpu_stats_{self.identifier}.csv')
             return max_memory, start_memory, end_memory
         return 0, 0, 0
 
@@ -143,22 +106,12 @@ class MemoryMonitor:
         max_memory = df["cpu_used_system_memory"].max()
         start_memory = df["cpu_used_system_memory"].iloc[0]
         end_memory = df["cpu_used_system_memory"].iloc[-1]
-        logger.debug(f"Start CPU Memory: ,{start_memory}")
-        logger.debug(f"End CPU Memory: ,{end_memory}")
-        logger.debug(f"Max CPU Memory: ,{max_memory}")
-        logger.debug(f"Net CPU Memory used:, {max_memory-start_memory}")
+        logging.debug(f"Start CPU Memory: ,{start_memory}")
+        logging.debug(f"End CPU Memory: ,{end_memory}")
+        logging.debug(f"Max CPU Memory: ,{max_memory}")
+        logging.debug(f"Net CPU Memory used:, {max_memory-start_memory}")
 
-        max_process_memory = df["cpu_used_process_memory"].max()
-        start_process_memory = df["cpu_used_process_memory"].iloc[0]
-        end_process_memory = df["cpu_used_process_memory"].iloc[-1]
-        logger.debug(f"Start process CPU Memory: ,{start_process_memory}")
-        logger.debug(f"End process CPU Memory: ,{end_process_memory}")
-        logger.debug(f"Max process CPU Memory: ,{max_process_memory}")
-        logger.debug(f"Net process CPU Memory used:, {max_process_memory-start_process_memory}")
-
-        # If you want to save the logs to a csv, uncomment this line
-        # and attach a mountpoint to the docker container /files directory
-        # df.to_csv(f'/files/cpu_metrics_{self.filename}.csv')
+        df.to_csv(f'cpu_stats_{self.identifier}.csv')
 
         return max_memory, start_memory, end_memory
 
@@ -169,3 +122,24 @@ class MemoryMonitor:
                 nvidia_smi.nvmlShutdown()
         except Exception:
             pass
+
+def setup_logging():
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Monitor system memory usage')
+    parser.add_argument('--identifier', required=True, help='Identifier for output files')
+    parser.add_argument('--interval', type=float, default=0.1, help='Monitoring interval in seconds')
+    parser.add_argument('--monitor-gpu', action='store_true', help='Enable GPU monitoring')
+
+    args = parser.parse_args()
+    setup_logging()
+
+    monitor = MemoryMonitor(args.identifier, args.interval, args.monitor_gpu)
+    try:
+        monitor.start_monitoring()
+        input("Press Enter to stop monitoring...")
+    finally:
+        monitor.stop_monitoring()
+        monitor.log_system_cpu_metrics()
+        monitor.log_system_gpu_metrics()
