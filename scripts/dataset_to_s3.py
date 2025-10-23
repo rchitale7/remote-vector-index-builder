@@ -16,9 +16,11 @@ from benchmarking.dataset.dataset_utils import downloadDataSet, prepare_indexing
 def setup_logging():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def convert_numpy_to_binary(vectors: np.ndarray) -> bytes:
-    """Convert numpy array to binary format"""
-    return vectors.tobytes()
+def convert_to_binary(data) -> bytes:
+    """Convert numpy array or list to binary format"""
+    if isinstance(data, list):
+        data = np.array(data, dtype=np.int32)
+    return data.tobytes()
 
 def upload_to_s3(data: bytes, bucket: str, key: str, region: str = 'us-east-1'):
     """Upload binary data to S3"""
@@ -28,11 +30,12 @@ def upload_to_s3(data: bytes, bucket: str, key: str, region: str = 'us-east-1'):
     logging.info(f"Uploaded {len(data)} bytes to s3://{bucket}/{key}")
 
 def main():
-    parser = argparse.ArgumentParser(description='Download HDF5 dataset, convert to binary, and upload to S3')
+    parser = argparse.ArgumentParser(description='Download HDF5 dataset, convert vectors and doc IDs to binary, and upload to S3')
     parser.add_argument('--download-url', required=True, help='URL to download the dataset')
     parser.add_argument('--dataset-name', required=True, help='Name of the dataset')
     parser.add_argument('--bucket', required=True, help='S3 bucket name')
-    parser.add_argument('--s3-key', required=True, help='S3 key for the binary file')
+    parser.add_argument('--vectors-key', required=True, help='S3 key for the vectors binary file')
+    parser.add_argument('--docids-key', required=True, help='S3 key for the doc IDs binary file')
     parser.add_argument('--compressed', action='store_true', help='Dataset is compressed')
     parser.add_argument('--compression-type', default='bz2', help='Compression type (default: bz2)')
     parser.add_argument('--normalize', action='store_true', help='Normalize vectors')
@@ -55,12 +58,18 @@ def main():
         d, vectors, ids = prepare_indexing_dataset(dataset_path, args.normalize, args.doc_count)
 
         # Convert to binary
-        binary_data = convert_numpy_to_binary(vectors)
+        vectors_binary = convert_to_binary(vectors)
+        docids_binary = convert_to_binary(ids)
 
-        # Upload to S3
-        upload_to_s3(binary_data, args.bucket, args.s3_key, args.region)
+        # Upload vectors to S3
+        upload_to_s3(vectors_binary, args.bucket, args.vectors_key, args.region)
+
+        # Upload doc IDs to S3
+        upload_to_s3(docids_binary, args.bucket, args.docids_key, args.region)
 
         logging.info(f"Successfully processed {len(vectors)} vectors of dimension {d}")
+        logging.info(f"Vectors uploaded to: s3://{args.bucket}/{args.vectors_key}")
+        logging.info(f"Doc IDs uploaded to: s3://{args.bucket}/{args.docids_key}")
 
     except Exception as e:
         logging.error(f"Error: {e}")
@@ -68,3 +77,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
