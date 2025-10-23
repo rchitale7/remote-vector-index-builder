@@ -131,15 +131,9 @@ class MemoryMonitor:
             logger.debug(f"Max system GPU Memory: ,{max_memory}")
             logger.debug(f"Net system GPU Memory used:, {max_memory-start_memory}")
 
-            # max_process_memory = df["gpu_used_agg_process_memory"].max()
-            # start_process_memory = df["gpu_used_agg_process_memory"].iloc[0]
-            # end_process_memory = df["gpu_used_agg_process_memory"].iloc[-1]
-            # logger.debug(f"Start process GPU Memory: ,{start_process_memory}")
-            # logger.debug(f"End process GPU Memory: ,{end_process_memory}")
-            # logger.debug(f"Max process GPU Memory: ,{max_process_memory}")
-            # logger.debug(f"Net process GPU Memory used:, {max_process_memory-start_process_memory}")
-
-            df.to_csv(f'/files/gpu_metrics_{self.filename}.csv')
+            # If you want to save the logs to a csv, uncomment this line
+            # and attach a mountpoint to the docker container /files directory
+            # df.to_csv(f'/files/gpu_metrics_{self.filename}.csv')
             return max_memory, start_memory, end_memory
         return 0, 0, 0
 
@@ -162,7 +156,9 @@ class MemoryMonitor:
         logger.debug(f"Max process CPU Memory: ,{max_process_memory}")
         logger.debug(f"Net process CPU Memory used:, {max_process_memory-start_process_memory}")
 
-        df.to_csv(f'/files/cpu_metrics_{self.filename}.csv')
+        # If you want to save the logs to a csv, uncomment this line
+        # and attach a mountpoint to the docker container /files directory
+        # df.to_csv(f'/files/cpu_metrics_{self.filename}.csv')
 
         return max_memory, start_memory, end_memory
 

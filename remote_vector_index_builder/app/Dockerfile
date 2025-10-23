@@ -5,8 +5,7 @@
 # this file be licensed under the Apache-2.0 license or a
 # compatible open source license.
 
-ARG CORE_IMAGE_TAG=core-snapshot
-FROM opensearchstaging/remote-vector-index-builder:core-rchital
+FROM rchitale7/remote-index-build-service:serialize-core-with-monitor
 
 USER root
 
