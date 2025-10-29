@@ -22,8 +22,13 @@ The run_tasks function orchestrates these tasks and returns a TaskResult object 
 - error: Any error message if the process failed
 
 Consumers of this module can either import and call the run_tasks function, or import and call each
-individual task in sequence. One reason to call each task in sequence is to persist the vectors to disk,
+individual task in sequence.
+
+One reason to call each task in sequence is to persist the vectors to disk,
 before building the index. The default run_tasks function does not do this, for simplicity.
+
+One reason to call the default run_tasks function is that it optimizes the memory usage, by cleaning
+up the vectors after the index is built in memory
 
 """
 import logging
@@ -101,8 +106,6 @@ def run_tasks(
     """
     with (
         tempfile.TemporaryDirectory() as temp_dir,
-        BytesIO() as vector_buffer,
-        BytesIO() as doc_id_buffer,
         index_storage_context(
             index_serialization_mode,
             temp_dir,
@@ -112,6 +115,8 @@ def run_tasks(
         if object_store_config is None:
             object_store_config = {}
 
+        vector_buffer = BytesIO()
+        doc_id_buffer = BytesIO()
         vectors_dataset = None
         try:
             logger.debug(
@@ -132,6 +137,7 @@ def run_tasks(
                 vector_bytes_buffer=vector_buffer,
                 doc_id_bytes_buffer=doc_id_buffer,
             )
+
             t2 = timer()
             download_time = t2 - t1
             logger.debug(
@@ -142,19 +148,34 @@ def run_tasks(
                 f"Building GPU index for vector path: {index_build_params.vector_path}"
             )
 
+            # First build the faiss index
+
             t1 = timer()
-            build_index(
-                index_build_params=index_build_params,
-                vectors_dataset=vectors_dataset,
-                output_destination=index_storage,
+            faiss_service = FaissIndexBuildService()
+            cpu_index = faiss_service.build_index(
+                index_build_params,
+                vectors_dataset,
             )
+
+            # now that cpu index is in memory, free the vectors to optimize memory usage
+
+            # free the memory view to the vector and doc id buffer
+            vectors_dataset.free_vectors_space()
+
+            # close the buffers
+            vector_buffer.close()
+            doc_id_buffer.close()
+
+            # finally, write the index to index_storage
+            faiss_service.write_cpu_index(
+                cpu_index, index_build_params, index_serialization_mode, index_storage
+            )
+
             t2 = timer()
             build_time = t2 - t1
             logger.debug(
                 f"Total index build time for path {index_build_params.vector_path}: {build_time:.2f} seconds"
             )
-
-            vectors_dataset.free_vectors_space()
 
             logger.debug(
                 f"Uploading index for vector path: {index_build_params.vector_path}"
@@ -186,12 +207,15 @@ def run_tasks(
         finally:
             if vectors_dataset is not None:
                 vectors_dataset.free_vectors_space()
+            vector_buffer.close()
+            doc_id_buffer.close()
 
 
 def build_index(
     index_build_params: IndexBuildParameters,
     vectors_dataset: VectorsDataset,
     output_destination: Union[BytesIO, str],
+    index_serialization_mode: IndexSerializationMode = IndexSerializationMode.DISK,
 ) -> None:
     """Builds an index using the provided vectors dataset and parameters.
 
@@ -205,8 +229,10 @@ def build_index(
             including:
             - dimension: The dimension of the vectors
             - index_parameters: Parameters for the index, such as space type
+        index_serialization_mode
         vectors_dataset (VectorsDataset): The dataset containing the vectors and document IDs
         output_destination: The output destination - either a file path (str) or buffer (BytesIO) to write the graph to
+
 
     Returns:
         None
@@ -214,13 +240,22 @@ def build_index(
     Note:
         - The caller is responsible for closing the vectors_dataset object
         - The caller is responsible for removing the CPU index file after upload to remote storage
+        - This method
 
     Raises:
         Exception: If the index build fails
 
     """
+
     faiss_service = FaissIndexBuildService()
-    faiss_service.build_index(index_build_params, vectors_dataset, output_destination)
+    cpu_index = faiss_service.build_index(
+        index_build_params,
+        vectors_dataset,
+    )
+
+    faiss_service.write_cpu_index(
+        cpu_index, index_build_params, index_serialization_mode, output_destination
+    )
 
 
 def _determine_streaming_buffer(

@@ -6,15 +6,14 @@
 # compatible open source license.
 
 from abc import ABC, abstractmethod
-from typing import Union
-from io import BytesIO
+from typing import Any
 from core.common.models import VectorsDataset, IndexBuildParameters
 
 
 class IndexBuildService(ABC):
     """
     The Index Build Service orchestrates the workflow of building a vector search index
-    New engines extending this class must call the necessary worlflow steps in the build_index method
+    New engines extending this class must call the necessary workflow steps in the build_index method
     """
 
     @abstractmethod
@@ -22,8 +21,7 @@ class IndexBuildService(ABC):
         self,
         index_build_parameters: IndexBuildParameters,
         vectors_dataset: VectorsDataset,
-        output_destination: Union[BytesIO, str],
-    ) -> None:
+    ) -> Any:
         """
         Implement this abstract method orchestrating an index build for the specified vectors dataset
         and input index build parameters
