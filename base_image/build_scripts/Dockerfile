@@ -18,6 +18,8 @@ RUN chown -R appuser:appuser /opt
 
 RUN mkdir /tmp/faiss
 COPY ./base_image/faiss /tmp/faiss
+COPY ./base_image/patches /tmp/patches
+RUN cd /tmp/faiss && patch -p1 < /tmp/patches/0001-Skip-copying-vectors-to-flat-storage-during-CAGRA-to.patch
 COPY ./base_image/build_scripts/build-faiss.sh /tmp/build-faiss.sh
 
 RUN chown -R appuser:appuser /tmp
@@ -37,7 +39,7 @@ RUN cmake --version
 ENV CUDA_ARCHS "80;86-real"
 
 # install base packages for X86_64
-RUN conda install -y -q -c conda-forge gxx_linux-64=14.2 sysroot_linux-64=2.17
+RUN conda install -y -q -c conda-forge gxx_linux-64=14.2 sysroot_linux-64=2.28
 
 # install all the dependencies we need for installing faiss
 # Ref: https://github.com/facebookresearch/faiss/blob/main/.github/actions/build_cmake/action.yml#L64

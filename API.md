@@ -16,7 +16,7 @@ Request Parameters
     "tenant_id": "UniqueClusterID", // Unique identifier for the cluster making the request
     "dimension": 768,
     "doc_count": 1000000, // Must be greater than 4
-    "data_type": "float",
+    "data_type": // {float, half_float, byte, binary}
     "engine": "faiss",
     "index_parameters": {
         "space_type": // {l2, innerproduct}
@@ -26,7 +26,8 @@ Request Parameters
             "ef_search": 100,
             "m": 16
         }
-    }
+    }, 
+    "skip_stored_vectors": false
 }
 
 Request Response:
@@ -47,6 +48,7 @@ Request Response:
 * By including an `algorithm` field in index parameters, we leave the door open for IVF, future algorithms
 * The existing algorithm parameters will be type checked on the client and server side, but the size of the map is variable to allow for future parameter additions
 * Qualitative parameters like `repository_type`, `data_type`, `engine`, `algorithm`, and `space_type` currently only support the options listed. The other numerical and string settings follow k-NN/repository snapshot precedent on ranges and expected values: https://opensearch.org/docs/latest/search-plugins/knn/knn-index/
+* `skip_stored_vectors` controls whether to send only the HNSW graph structure back, or the HNSW graph structure with flat vectors attached. It defaults to `false`. If `true`, the k-NN data node must handle stitching the graph back together with the flat vectors at indexing or search time. 
 
 #### Error codes
 

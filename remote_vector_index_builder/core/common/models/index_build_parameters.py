@@ -170,4 +170,5 @@ class IndexBuildParameters(BaseModel):
     data_type: DataType = DataType.FLOAT
     engine: Engine = Engine.FAISS
     index_parameters: IndexParameters = Field(default_factory=IndexParameters)
+    skip_stored_vectors: bool = False
     model_config = ConfigDict(extra="forbid")
