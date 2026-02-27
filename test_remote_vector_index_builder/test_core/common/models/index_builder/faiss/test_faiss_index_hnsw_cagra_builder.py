@@ -94,3 +94,103 @@ class TestFaissIndexHNSWCagraBuilder:
             )
         assert "Failed to convert GPU index to CPU index" in str(exc_info.value)
         assert "Simulated copy error" in str(exc_info.value)
+
+    def test_graph_only_passes_skip_storage(self, mock_gpu_index, mock_index_id_map):
+        """Test that graph_only=True passes skip_storage=True to copyTo"""
+        builder = FaissIndexHNSWCagraBuilder(graph_only=True)
+
+        copy_calls = []
+        original_copyTo = mock_gpu_index.copyTo
+
+        def tracking_copyTo(cpu_index, skip_storage=False):
+            copy_calls.append(skip_storage)
+            return original_copyTo(cpu_index, skip_storage)
+
+        mock_gpu_index.copyTo = tracking_copyTo
+
+        builder.convert_gpu_to_cpu_index(
+            FaissGpuBuildIndexOutput(
+                gpu_index=mock_gpu_index, index_id_map=mock_index_id_map
+            )
+        )
+
+        assert len(copy_calls) == 1
+        assert copy_calls[0] is True
+
+    def test_graph_only_false_passes_skip_storage_false(
+        self, default_builder, mock_gpu_index, mock_index_id_map
+    ):
+        """Test that graph_only=False (default) passes skip_storage=False to copyTo"""
+        copy_calls = []
+        original_copyTo = mock_gpu_index.copyTo
+
+        def tracking_copyTo(cpu_index, skip_storage=False):
+            copy_calls.append(skip_storage)
+            return original_copyTo(cpu_index, skip_storage)
+
+        mock_gpu_index.copyTo = tracking_copyTo
+
+        default_builder.convert_gpu_to_cpu_index(
+            FaissGpuBuildIndexOutput(
+                gpu_index=mock_gpu_index, index_id_map=mock_index_id_map
+            )
+        )
+
+        assert len(copy_calls) == 1
+        assert copy_calls[0] is False
+
+    def test_binary_graph_only_passes_skip_storage(self):
+        """Test that graph_only=True passes skip_storage=True to binary copyTo"""
+        from core.common.models.index_build_parameters import DataType
+
+        builder = FaissIndexHNSWCagraBuilder(
+            graph_only=True, vector_dtype=DataType.BINARY
+        )
+
+        mock_gpu_binary_index = faiss.GpuIndexBinaryCagra()
+        mock_binary_id_map = faiss.IndexBinaryIDMap()
+
+        copy_calls = []
+        original_copyTo = mock_gpu_binary_index.copyTo
+
+        def tracking_copyTo(cpu_index, skip_storage=False):
+            copy_calls.append(skip_storage)
+            return original_copyTo(cpu_index, skip_storage)
+
+        mock_gpu_binary_index.copyTo = tracking_copyTo
+
+        builder.convert_gpu_to_cpu_index(
+            FaissGpuBuildIndexOutput(
+                gpu_index=mock_gpu_binary_index, index_id_map=mock_binary_id_map
+            )
+        )
+
+        assert len(copy_calls) == 1
+        assert copy_calls[0] is True
+
+    def test_binary_graph_only_false_does_not_skip_storage(self):
+        """Test that graph_only=False (default) does not skip storage for binary copyTo"""
+        from core.common.models.index_build_parameters import DataType
+
+        builder = FaissIndexHNSWCagraBuilder(vector_dtype=DataType.BINARY)
+
+        mock_gpu_binary_index = faiss.GpuIndexBinaryCagra()
+        mock_binary_id_map = faiss.IndexBinaryIDMap()
+
+        copy_calls = []
+        original_copyTo = mock_gpu_binary_index.copyTo
+
+        def tracking_copyTo(cpu_index, skip_storage=False):
+            copy_calls.append(skip_storage)
+            return original_copyTo(cpu_index, skip_storage)
+
+        mock_gpu_binary_index.copyTo = tracking_copyTo
+
+        builder.convert_gpu_to_cpu_index(
+            FaissGpuBuildIndexOutput(
+                gpu_index=mock_gpu_binary_index, index_id_map=mock_binary_id_map
+            )
+        )
+
+        assert len(copy_calls) == 1
+        assert copy_calls[0] is False

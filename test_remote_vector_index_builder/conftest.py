@@ -85,3 +85,45 @@ def aws_credentials():
     os.environ["AWS_DEFAULT_REGION"] = "us-west-2"
     yield
     os.environ.pop("AWS_DEFAULT_REGION", None)
+
+
+@pytest.fixture
+def graph_only_index_build_parameters():
+    """Create sample IndexBuildParameters with graph_only=True for testing"""
+    return IndexBuildParameters(
+        container_name="testbucket",
+        vector_path="vec.knnvec",
+        doc_id_path="doc.knndid",
+        dimension=3,
+        doc_count=5,
+        index_parameters=IndexParameters(
+            space_type=SpaceType.INNERPRODUCT,
+            algorithm_parameters=AlgorithmParameters(
+                ef_construction=200, ef_search=200
+            ),
+        ),
+        data_type=DataType.FLOAT,
+        repository_type="s3",
+        graph_only=True,
+    )
+
+
+@pytest.fixture
+def graph_only_binary_index_build_parameters():
+    """Create sample binary IndexBuildParameters with graph_only=True for testing"""
+    return IndexBuildParameters(
+        container_name="testbucket",
+        vector_path="vec.knnvec",
+        doc_id_path="doc.knndid",
+        dimension=24,
+        doc_count=5,
+        index_parameters=IndexParameters(
+            space_type=SpaceType.INNERPRODUCT,
+            algorithm_parameters=AlgorithmParameters(
+                ef_construction=200, ef_search=200
+            ),
+        ),
+        data_type=DataType.BINARY,
+        repository_type="s3",
+        graph_only=True,
+    )

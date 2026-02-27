@@ -31,6 +31,7 @@ One reason to call the default run_tasks function is that it optimizes the memor
 up the vectors after the index is built in memory
 
 """
+
 import logging
 import os
 import tempfile

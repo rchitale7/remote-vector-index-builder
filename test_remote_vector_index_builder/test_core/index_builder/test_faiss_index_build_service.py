@@ -16,6 +16,7 @@ from core.common.models.index_builder import CagraGraphBuildAlgo
 from core.common.models.index_builder.faiss import FaissGPUIndexCagraBuilder
 from core.index_builder.faiss.faiss_index_build_service import FaissIndexBuildService
 from core.index_builder.index_builder_utils import calculate_ivf_pq_n_lists
+from core.common.models.index_builder.faiss import FaissIndexHNSWCagraBuilder
 
 
 class TestFaissIndexBuildService:
@@ -291,3 +292,113 @@ class TestFaissIndexBuildService:
                 )
 
             assert "Write failed" in str(exc_info.value)
+
+    def test_build_index_graph_only(
+        self, service, vectors_dataset, graph_only_index_build_parameters, tmp_path
+    ):
+        """Test that graph_only=True is passed through to CPU index builder"""
+        with patch(
+            "core.common.models.index_builder.faiss.FaissGPUIndexCagraBuilder.from_dict"
+        ) as mock_gpu_from_dict, patch(
+            "core.common.models.index_builder.faiss.FaissIndexHNSWCagraBuilder.from_dict"
+        ) as mock_cpu_from_dict:
+            from core.common.models.index_builder.faiss import FaissGPUIndexCagraBuilder
+
+            mock_gpu_from_dict.return_value = FaissGPUIndexCagraBuilder()
+            mock_cpu_from_dict.return_value = FaissIndexHNSWCagraBuilder(
+                graph_only=True
+            )
+
+            service.build_index(graph_only_index_build_parameters, vectors_dataset)
+
+            cpu_call_args = mock_cpu_from_dict.call_args[0][0]
+            assert cpu_call_args["graph_only"] is True
+
+    def test_build_binary_index_graph_only(
+        self,
+        service,
+        binary_vectors_dataset,
+        graph_only_binary_index_build_parameters,
+        tmp_path,
+    ):
+        """Test that graph_only=True is passed through to CPU index builder for binary"""
+        with patch(
+            "core.common.models.index_builder.faiss.FaissGPUIndexCagraBuilder.from_dict"
+        ) as mock_gpu_from_dict, patch(
+            "core.common.models.index_builder.faiss.FaissIndexHNSWCagraBuilder.from_dict"
+        ) as mock_cpu_from_dict:
+            from core.common.models.index_builder.faiss import FaissGPUIndexCagraBuilder
+
+            mock_gpu_from_dict.return_value = FaissGPUIndexCagraBuilder()
+            mock_cpu_from_dict.return_value = FaissIndexHNSWCagraBuilder(
+                graph_only=True, vector_dtype=DataType.BINARY
+            )
+
+            service.build_index(
+                graph_only_binary_index_build_parameters, binary_vectors_dataset
+            )
+
+            cpu_call_args = mock_cpu_from_dict.call_args[0][0]
+            assert cpu_call_args["graph_only"] is True
+
+    def test_write_cpu_index_graph_only_passes_io_flag(
+        self, service, vectors_dataset, graph_only_index_build_parameters, tmp_path
+    ):
+        """Test that write_cpu_index passes IO_FLAG_SKIP_STORAGE when graph_only=True"""
+        cpu_index_output = service.build_index(
+            graph_only_index_build_parameters, vectors_dataset
+        )
+
+        write_calls = []
+        original_write = faiss.write_index
+
+        def tracking_write(index, writer, io_flags=0):
+            write_calls.append(io_flags)
+            return original_write(index, writer)
+
+        faiss.write_index = tracking_write
+        try:
+            output_path = str(tmp_path / "output.index")
+            service.write_cpu_index(
+                cpu_index_output,
+                graph_only_index_build_parameters,
+                IndexSerializationMode.DISK,
+                output_path,
+            )
+            assert len(write_calls) == 1
+            assert write_calls[0] == faiss.IO_FLAG_SKIP_STORAGE
+        finally:
+            faiss.write_index = original_write
+
+    def test_write_binary_cpu_index_graph_only_passes_io_flag(
+        self,
+        service,
+        binary_vectors_dataset,
+        graph_only_binary_index_build_parameters,
+        tmp_path,
+    ):
+        """Test that write_cpu_index passes IO_FLAG_SKIP_STORAGE for binary when graph_only=True"""
+        cpu_index_output = service.build_index(
+            graph_only_binary_index_build_parameters, binary_vectors_dataset
+        )
+
+        write_calls = []
+        original_write = faiss.write_index_binary
+
+        def tracking_write(index, writer, io_flags=0):
+            write_calls.append(io_flags)
+            return original_write(index, writer)
+
+        faiss.write_index_binary = tracking_write
+        try:
+            output_path = str(tmp_path / "output.index")
+            service.write_cpu_index(
+                cpu_index_output,
+                graph_only_binary_index_build_parameters,
+                IndexSerializationMode.DISK,
+                output_path,
+            )
+            assert len(write_calls) == 1
+            assert write_calls[0] == faiss.IO_FLAG_SKIP_STORAGE
+        finally:
+            faiss.write_index_binary = original_write
