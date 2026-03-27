@@ -1,6 +1,7 @@
 import os
 import shutil
-from urllib.request import urlretrieve
+from urllib.request import urlretrieve, build_opener, install_opener, Request, HTTPSHandler
+import urllib.request
 
 from benchmarking.decorators.timer import timer_func
 from benchmarking.dataset.dataset import HDF5DataSet, Context
@@ -25,10 +26,18 @@ def downloadDataSet(
     dataset_name: str,
     isCompressed: bool,
     compressionType: str | None,
+    local_dir: str | None = None,
 ) -> str:
     logging.info("Downloading dataset...")
+    opener = build_opener()
+    opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
+    install_opener(opener)
     destination_path_compressed = None
-    dir_path = ensureDir("dataset")
+    if local_dir:
+        os.makedirs(local_dir, exist_ok=True)
+        dir_path = local_dir
+    else:
+        dir_path = ensureDir("dataset")
     if compressionType is not None:
         destination_path_compressed = os.path.join(
             dir_path, f"{dataset_name}.hdf5.{compressionType}"

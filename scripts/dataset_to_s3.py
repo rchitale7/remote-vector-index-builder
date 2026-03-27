@@ -29,6 +29,17 @@ def convert_to_binary(data) -> bytes:
         data = np.array(data, dtype=np.int32)
     return data.tobytes()
 
+def quantize_to_binary(vectors: np.ndarray) -> bytes:
+    """One-bit scalar quantization matching k-NN OneBitScalarQuantizer + BitPacker.
+
+    Each float dimension is compared against the per-dimension mean threshold.
+    1 bit per dimension, packed into bytes (MSB first, matching BitPacker.java).
+    RVIB expects data_type=binary with dimension = original float dimension (number of bits).
+    """
+    thresholds = vectors.mean(axis=0)
+    bits = (vectors > thresholds).astype(np.uint8)
+    return np.packbits(bits, axis=1).tobytes()
+
 def upload_to_s3(data: bytes, bucket: str, key: str, region: str = 'us-east-1'):
     """Upload binary data to S3"""
     s3_client = boto3.client('s3', region_name=region)
@@ -48,6 +59,8 @@ def main():
     parser.add_argument('--normalize', action='store_true', help='Normalize vectors')
     parser.add_argument('--doc-count', type=int, default=-1, help='Number of documents to read (-1 for all)')
     parser.add_argument('--region', default='us-east-1', help='AWS region')
+    parser.add_argument('--local-dir', default=None, help='Local directory for dataset download (avoids needing root)')
+    parser.add_argument('--quantize', action='store_true', help='Apply one-bit scalar quantization (binary output)')
 
     args = parser.parse_args()
     setup_logging()
@@ -58,14 +71,19 @@ def main():
             args.download_url,
             args.dataset_name,
             args.compressed,
-            args.compression_type if args.compressed else None
+            args.compression_type if args.compressed else None,
+            args.local_dir
         )
 
         # Prepare indexing dataset
         d, vectors, ids = prepare_indexing_dataset(dataset_path, args.normalize, args.doc_count)
 
         # Convert to binary
-        vectors_binary = convert_to_binary(vectors)
+        if args.quantize:
+            logging.info("Applying one-bit scalar quantization...")
+            vectors_binary = quantize_to_binary(vectors)
+        else:
+            vectors_binary = convert_to_binary(vectors)
         docids_binary = convert_to_binary(ids)
 
         # Upload vectors to S3
