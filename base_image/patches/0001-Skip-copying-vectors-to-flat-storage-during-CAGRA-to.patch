@@ -1,0 +1,254 @@
+From 563504178a4f181ad550a39ce5e216547b617326 Mon Sep 17 00:00:00 2001
+From: Rohan Chitale <r.chitale7@gmail.com>
+Date: Mon, 16 Mar 2026 02:20:43 +0000
+Subject: [PATCH] Skip copying vectors to flat storage during CAGRA to HNSW
+ conversion when skip_storage=true
+
+---
+ faiss/gpu/GpuIndexBinaryCagra.cu | 27 +++++++++++++++++----------
+ faiss/gpu/GpuIndexBinaryCagra.h  |  7 +++++--
+ faiss/gpu/GpuIndexCagra.cu       | 15 +++++++++------
+ faiss/gpu/GpuIndexCagra.h        |  7 +++++--
+ faiss/impl/index_read.cpp        |  4 +++-
+ faiss/impl/index_write.cpp       | 21 +++++++++++++--------
+ faiss/index_io.h                 |  6 +++---
+ 7 files changed, 55 insertions(+), 32 deletions(-)
+
+diff --git a/faiss/gpu/GpuIndexBinaryCagra.cu b/faiss/gpu/GpuIndexBinaryCagra.cu
+index 3acb23714..b377b2f4b 100644
+--- a/faiss/gpu/GpuIndexBinaryCagra.cu
++++ b/faiss/gpu/GpuIndexBinaryCagra.cu
+@@ -308,7 +308,9 @@ void GpuIndexBinaryCagra::copyFrom(const faiss::IndexBinaryHNSWCagra* index) {
+     this->is_trained = true;
+ }
+ 
+-void GpuIndexBinaryCagra::copyTo(faiss::IndexBinaryHNSWCagra* index) const {
++void GpuIndexBinaryCagra::copyTo(
++        faiss::IndexBinaryHNSWCagra* index,
++        bool skip_storage) const {
+     FAISS_ASSERT(index_ && this->is_trained && index);
+ 
+     DeviceScope scope(cagraConfig_.device);
+@@ -338,19 +340,24 @@ void GpuIndexBinaryCagra::copyTo(faiss::IndexBinaryHNSWCagra* index) const {
+     auto n_train = this->ntotal;
+     auto stream = resources_->getDefaultStream(cagraConfig_.device);
+ 
+-    auto train_dataset = toHost<uint8_t, 2>(
+-            const_cast<uint8_t*>(index_->get_training_dataset()),
+-            stream,
+-            {idx_t(n_train), this->d / 8});
+-
+     // turn off as level 0 is copied from CAGRA graph
+     index->init_level0 = false;
+-    if (!index->base_level_only) {
+-        index->add(n_train, train_dataset.data());
+-    } else {
++    if (skip_storage) {
+         index->hnsw.prepare_level_tab(n_train, false);
+-        index->storage->add(n_train, train_dataset.data());
+         index->ntotal = n_train;
++    } else {
++        auto train_dataset = toHost<uint8_t, 2>(
++                const_cast<uint8_t*>(index_->get_training_dataset()),
++                stream,
++                {idx_t(n_train), this->d / 8});
++
++        if (!index->base_level_only) {
++            index->add(n_train, train_dataset.data());
++        } else {
++            index->hnsw.prepare_level_tab(n_train, false);
++            index->storage->add(n_train, train_dataset.data());
++            index->ntotal = n_train;
++        }
+     }
+ 
+     auto graph = get_knngraph();
+diff --git a/faiss/gpu/GpuIndexBinaryCagra.h b/faiss/gpu/GpuIndexBinaryCagra.h
+index 30da20785..1a9f05d50 100644
+--- a/faiss/gpu/GpuIndexBinaryCagra.h
++++ b/faiss/gpu/GpuIndexBinaryCagra.h
+@@ -67,8 +67,11 @@ struct GpuIndexBinaryCagra : public IndexBinary {
+     void copyFrom(const faiss::IndexBinaryHNSWCagra* index);
+ 
+     /// Copy ourselves to the given CPU index; will overwrite all data
+-    /// in the index instance
+-    void copyTo(faiss::IndexBinaryHNSWCagra* index) const;
++    /// in the index instance. If skip_storage is true, vectors are not
++    /// copied to the flat storage, reducing CPU memory usage.
++    void copyTo(
++            faiss::IndexBinaryHNSWCagra* index,
++            bool skip_storage = false) const;
+ 
+     void reset() override;
+ 
+diff --git a/faiss/gpu/GpuIndexCagra.cu b/faiss/gpu/GpuIndexCagra.cu
+index fe6760619..40cc55691 100644
+--- a/faiss/gpu/GpuIndexCagra.cu
++++ b/faiss/gpu/GpuIndexCagra.cu
+@@ -389,7 +389,9 @@ void GpuIndexCagra::copyFrom(const faiss::IndexHNSWCagra* index) {
+     copyFromEx(index, NumericType::Float32);
+ }
+ 
+-void GpuIndexCagra::copyTo(faiss::IndexHNSWCagra* index) const {
++void GpuIndexCagra::copyTo(
++        faiss::IndexHNSWCagra* index,
++        bool skip_storage) const {
+     FAISS_ASSERT(
+             !std::holds_alternative<std::monostate>(index_) &&
+             this->is_trained && index);
+@@ -451,7 +453,12 @@ void GpuIndexCagra::copyTo(faiss::IndexHNSWCagra* index) const {
+     auto n_train = this->ntotal;
+     bool allocation = false;
+ 
+-    if (numeric_type_ == NumericType::Float32) {
++    // turn off as level 0 is copied from CAGRA graph
++    index->init_level0 = false;
++    if (skip_storage) {
++        index->hnsw.prepare_level_tab(n_train, false);
++        index->ntotal = n_train;
++    } else if (numeric_type_ == NumericType::Float32) {
+         float* train_dataset;
+         const float* dataset =
+                 std::get<std::shared_ptr<CuvsCagra<float>>>(index_)
+@@ -469,8 +476,6 @@ void GpuIndexCagra::copyTo(faiss::IndexHNSWCagra* index) const {
+             train_dataset = const_cast<float*>(dataset);
+         }
+ 
+-        // turn off as level 0 is copied from CAGRA graph
+-        index->init_level0 = false;
+         if (!index->base_level_only) {
+             index->add(n_train, train_dataset);
+         } else {
+@@ -498,7 +503,6 @@ void GpuIndexCagra::copyTo(faiss::IndexHNSWCagra* index) const {
+             train_dataset = const_cast<half*>(dataset);
+         }
+ 
+-        index->init_level0 = false;
+         if (!index->base_level_only) {
+             FAISS_THROW_MSG(
+                     "Only base level copy is supported for FP16 types in GpuIndexCagra::copyTo");
+@@ -530,7 +534,6 @@ void GpuIndexCagra::copyTo(faiss::IndexHNSWCagra* index) const {
+             train_dataset = const_cast<int8_t*>(dataset);
+         }
+ 
+-        index->init_level0 = false;
+         if (!index->base_level_only) {
+             FAISS_THROW_MSG(
+                     "Only base level copy is supported for Int8 types in GpuIndexCagra::copyTo");
+diff --git a/faiss/gpu/GpuIndexCagra.h b/faiss/gpu/GpuIndexCagra.h
+index 72dcf074e..8e94e2542 100644
+--- a/faiss/gpu/GpuIndexCagra.h
++++ b/faiss/gpu/GpuIndexCagra.h
+@@ -276,8 +276,11 @@ struct GpuIndexCagra : public GpuIndex {
+             NumericType numeric_type);
+ 
+     /// Copy ourselves to the given CPU index; will overwrite all data
+-    /// in the index instance
+-    void copyTo(faiss::IndexHNSWCagra* index) const;
++    /// in the index instance. If skip_storage is true, vectors are not
++    /// copied to the flat storage, reducing CPU memory usage.
++    void copyTo(
++            faiss::IndexHNSWCagra* index,
++            bool skip_storage = false) const;
+ 
+     void reset() override;
+ 
+diff --git a/faiss/impl/index_read.cpp b/faiss/impl/index_read.cpp
+index 89f05c757..5d2a768f9 100644
+--- a/faiss/impl/index_read.cpp
++++ b/faiss/impl/index_read.cpp
+@@ -1374,7 +1374,9 @@ IndexBinary* read_index_binary(IOReader* f, int io_flags) {
+     IndexBinary* idx = nullptr;
+     uint32_t h;
+     READ1(h);
+-    if (h == fourcc("IBxF")) {
++    if (h == fourcc("null")) {
++        return nullptr;
++    } else if (h == fourcc("IBxF")) {
+         IndexBinaryFlat* idxf = new IndexBinaryFlat();
+         read_index_binary_header(idxf, f);
+         read_vector(idxf->xb, f);
+diff --git a/faiss/impl/index_write.cpp b/faiss/impl/index_write.cpp
+index def7dcd2b..b2df5bab6 100644
+--- a/faiss/impl/index_write.cpp
++++ b/faiss/impl/index_write.cpp
+@@ -765,7 +765,7 @@ void write_index(const Index* idx, IOWriter* f, int io_flags) {
+         // no need to store additional info for IndexIDMap2
+         WRITE1(h);
+         write_index_header(idxmap, f);
+-        write_index(idxmap->index, f);
++        write_index(idxmap->index, f, io_flags);
+         WRITEVECTOR(idxmap->id_map);
+     } else if (const IndexHNSW* idxhnsw = dynamic_cast<const IndexHNSW*>(idx)) {
+         uint32_t h = dynamic_cast<const IndexHNSWFlat*>(idx) ? fourcc("IHNf")
+@@ -982,7 +982,7 @@ static void write_binary_multi_hash_map(
+     WRITEVECTOR(buf);
+ }
+ 
+-void write_index_binary(const IndexBinary* idx, IOWriter* f) {
++void write_index_binary(const IndexBinary* idx, IOWriter* f, int io_flags) {
+     if (const IndexBinaryFlat* idxf =
+                 dynamic_cast<const IndexBinaryFlat*>(idx)) {
+         uint32_t h = fourcc("IBxF");
+@@ -1021,7 +1021,12 @@ void write_index_binary(const IndexBinary* idx, IOWriter* f) {
+         }
+ 
+         write_HNSW(&idxhnsw->hnsw, f);
+-        write_index_binary(idxhnsw->storage, f);
++        if (io_flags & IO_FLAG_SKIP_STORAGE) {
++            uint32_t n4 = fourcc("null");
++            WRITE1(n4);
++        } else {
++            write_index_binary(idxhnsw->storage, f, io_flags);
++        }
+     } else if (
+             const IndexBinaryIDMap* idxmap =
+                     dynamic_cast<const IndexBinaryIDMap*>(idx)) {
+@@ -1031,7 +1036,7 @@ void write_index_binary(const IndexBinary* idx, IOWriter* f) {
+         // no need to store additional info for IndexIDMap2
+         WRITE1(h);
+         write_index_binary_header(idxmap, f);
+-        write_index_binary(idxmap->index, f);
++        write_index_binary(idxmap->index, f, io_flags);
+         WRITEVECTOR(idxmap->id_map);
+     } else if (
+             const IndexBinaryHash* idxh =
+@@ -1061,14 +1066,14 @@ void write_index_binary(const IndexBinary* idx, IOWriter* f) {
+     }
+ }
+ 
+-void write_index_binary(const IndexBinary* idx, FILE* f) {
++void write_index_binary(const IndexBinary* idx, FILE* f, int io_flags) {
+     FileIOWriter writer(f);
+-    write_index_binary(idx, &writer);
++    write_index_binary(idx, &writer, io_flags);
+ }
+ 
+-void write_index_binary(const IndexBinary* idx, const char* fname) {
++void write_index_binary(const IndexBinary* idx, const char* fname, int io_flags) {
+     FileIOWriter writer(fname);
+-    write_index_binary(idx, &writer);
++    write_index_binary(idx, &writer, io_flags);
+ }
+ 
+ } // namespace faiss
+diff --git a/faiss/index_io.h b/faiss/index_io.h
+index 79c013dff..4766190a9 100644
+--- a/faiss/index_io.h
++++ b/faiss/index_io.h
+@@ -37,9 +37,9 @@ void write_index(const Index* idx, const char* fname, int io_flags = 0);
+ void write_index(const Index* idx, FILE* f, int io_flags = 0);
+ void write_index(const Index* idx, IOWriter* writer, int io_flags = 0);
+ 
+-void write_index_binary(const IndexBinary* idx, const char* fname);
+-void write_index_binary(const IndexBinary* idx, FILE* f);
+-void write_index_binary(const IndexBinary* idx, IOWriter* writer);
++void write_index_binary(const IndexBinary* idx, const char* fname, int io_flags = 0);
++void write_index_binary(const IndexBinary* idx, FILE* f, int io_flags = 0);
++void write_index_binary(const IndexBinary* idx, IOWriter* writer, int io_flags = 0);
+ 
+ // The read_index flags are implemented only for a subset of index types.
+ const int IO_FLAG_READ_ONLY = 2;
+-- 
+2.50.1
+

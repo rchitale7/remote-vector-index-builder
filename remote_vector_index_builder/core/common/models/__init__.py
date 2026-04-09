@@ -10,7 +10,6 @@ from .index_build_parameters import IndexBuildParameters
 from .index_build_parameters import IndexSerializationMode
 from .vectors_dataset import VectorsDataset
 
-
 __all__ = [
     "SpaceType",
     "IndexBuildParameters",

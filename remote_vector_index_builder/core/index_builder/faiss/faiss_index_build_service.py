@@ -124,6 +124,7 @@ class FaissIndexBuildService(IndexBuildService):
                 "ef_search": index_build_parameters.index_parameters.algorithm_parameters.ef_search,
                 "ef_construction": index_build_parameters.index_parameters.algorithm_parameters.ef_construction,
                 "vector_dtype": index_build_parameters.data_type,
+                "skip_stored_vectors": index_build_parameters.skip_stored_vectors,
             }
             faiss_index_hnsw_cagra_builder = FaissIndexHNSWCagraBuilder.from_dict(
                 cpu_index_config_params
@@ -199,10 +200,21 @@ class FaissIndexBuildService(IndexBuildService):
             else:
                 # Otherwise, treat the output destination like a file path
                 writer = output_destination
+            io_flags = (
+                faiss.IO_FLAG_SKIP_STORAGE
+                if index_build_parameters.skip_stored_vectors
+                else 0
+            )
+            if io_flags:
+                logger.debug(
+                    "skip_stored_vectors=True: writing index with IO_FLAG_SKIP_STORAGE"
+                )
             if index_build_parameters.data_type != DataType.BINARY:
-                faiss.write_index(cpu_build_index_output.index_id_map, writer)
+                faiss.write_index(cpu_build_index_output.index_id_map, writer, io_flags)
             else:
-                faiss.write_index_binary(cpu_build_index_output.index_id_map, writer)
+                faiss.write_index_binary(
+                    cpu_build_index_output.index_id_map, writer, io_flags
+                )
             # Free memory taken by CPU Index
             cpu_build_index_output.cleanup()
             t2 = timer()

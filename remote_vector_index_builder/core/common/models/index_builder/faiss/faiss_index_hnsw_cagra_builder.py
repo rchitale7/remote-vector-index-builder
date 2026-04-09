@@ -6,6 +6,7 @@
 # compatible open source license.
 
 import faiss
+import logging
 from dataclasses import dataclass
 from typing import Dict, Any
 from core.common.models.index_builder import (
@@ -17,6 +18,8 @@ from core.common.models.index_builder import (
 from remote_vector_index_builder.core.common.models.index_build_parameters import (
     DataType,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -37,6 +40,8 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
     base_level_only: bool = True
 
     vector_dtype: DataType = DataType.FLOAT
+
+    skip_stored_vectors: bool = False
 
     @classmethod
     def from_dict(
@@ -69,7 +74,13 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
             cpu_index.base_level_only = self.base_level_only
 
             # Copy GPU index to CPU index
-            faiss_gpu_build_index_output.gpu_index.copyTo(cpu_index)
+            if self.skip_stored_vectors:
+                logger.debug(
+                    "skip_stored_vectors=True: skipping vector storage during copyTo"
+                )
+                faiss_gpu_build_index_output.gpu_index.copyTo(cpu_index, True)
+            else:
+                faiss_gpu_build_index_output.gpu_index.copyTo(cpu_index)
 
             # Remove reference of GPU Index from the IndexIDMap
             faiss_gpu_build_index_output.index_id_map.index = None
@@ -104,7 +115,13 @@ class FaissIndexHNSWCagraBuilder(FaissCPUIndexBuilder):
             cpu_index.base_level_only = self.base_level_only
 
             # Convert GPU binary index to CPU binary index
-            faiss_gpu_build_index_output.gpu_index.copyTo(cpu_index)
+            if self.skip_stored_vectors:
+                logger.debug(
+                    "skip_stored_vectors=True: skipping vector storage during copyTo"
+                )
+                faiss_gpu_build_index_output.gpu_index.copyTo(cpu_index, True)
+            else:
+                faiss_gpu_build_index_output.gpu_index.copyTo(cpu_index)
 
             # Remove reference of GPU Index from the IndexBinaryIDMap
             faiss_gpu_build_index_output.index_id_map.index = None

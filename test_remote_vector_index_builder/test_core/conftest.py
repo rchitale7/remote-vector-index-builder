@@ -74,7 +74,7 @@ class MockGpuIndexCagra:
     def is_deleted(self):
         return _deletion_tracker.is_deleted(self.id)
 
-    def copyTo(self, cpu_index):
+    def copyTo(self, cpu_index, skip_storage=False):
         """Mock implementation of copyTo method"""
         if not isinstance(cpu_index, MockIndexHNSWCagra):
             raise TypeError("Target must be IndexHNSWCagra")
@@ -99,7 +99,7 @@ class MockGpuIndexBinaryCagra:
     def is_deleted(self):
         return _deletion_tracker.is_deleted(self.id)
 
-    def copyTo(self, cpu_index):
+    def copyTo(self, cpu_index, skip_storage=False):
         """Mock implementation of copyTo method"""
         if not isinstance(cpu_index, MockIndexBinaryHNSWCagra):
             raise TypeError("Target must be MockIndexBinaryHNSWCagra")
@@ -253,6 +253,9 @@ class FaissMock(ModuleType):
         self.Float16 = Mock()
         self.Int8 = Mock()
 
+        # Constants
+        self.IO_FLAG_SKIP_STORAGE = 1
+
         # Enums
         self.graph_build_algo_IVF_PQ = 0
         self.graph_build_algo_NN_DESCENT = 1
@@ -282,7 +285,7 @@ class FaissMock(ModuleType):
             raise TypeError("Target must be GpuIndexBinaryCagra")
         return self.IndexBinaryHNSW()
 
-    def _write_index_binary(self, index, output_destination):
+    def _write_index_binary(self, index, output_destination, io_flags=0):
         if not isinstance(index, MockIndexBinaryIDMap):
             raise TypeError("Target must be IndexBinaryIDMap")
         if isinstance(output_destination, str):
@@ -299,7 +302,7 @@ class FaissMock(ModuleType):
         else:
             raise TypeError("Unsupported output destination")
 
-    def _write_index(self, index, output_destination):
+    def _write_index(self, index, output_destination, io_flags=0):
         if not index:
             raise ValueError("Index cannot be None")
         if isinstance(output_destination, str):
