@@ -1,8 +1,0 @@
-dataset,dimension,graph_type,vector_type,recall@100,recall@1,search_time_s,throughput_qps,num_queries,ef_search
-sift,128,binary,binary,0.170009,0.1242,2.39,4192.3,10000,100
-bigAnn-10M,128,binary,binary,0.120085,0.0376,23.34,428.4,10000,100
-open-ai-1536-temp,1536,binary,binary,0.62765,0.549,0.98,1018.2,1000,100
-ms-marco-384,384,binary,binary,0.617502,0.6015,16.02,3121.7,50000,100
-cohere-768-ip,768,binary,binary,0.334261,0.2091,3.79,2639.4,10000,100
-cohere-768-l2,768,binary,binary,0.285357,0.2497,3.68,2720.9,10000,100
-gist,960,binary,binary,0.07366,0.065,0.53,1880.4,1000,100

@@ -1,0 +1,11 @@
+filename,normalize,doc_count,dimensions,space_type
+sift-128-euclidean.hdf5,false,1000000,128,l2
+gist-960-euclidean.hdf5,false,1000000,960,l2
+coherev2-10m.hdf5,false,10000000,768,innerproduct
+mini_msmarco.hdf5,false,1000000,384,l2
+mpnet_marco.hdf5,false,1000000,768,l2
+marco_tasb.hdf5,false,1000000,768,innerproduct
+e5_embeddings.hdf5,false,8841812,384,l2
+snowflake_embeddings.hdf5,false,8841823,768,l2
+flickr-image-queries.hdf5,false,6637685,512,l2
+coherev2-dbpedia.hdf5,false,450000,4096,l2
