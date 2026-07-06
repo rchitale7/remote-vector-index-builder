@@ -23,7 +23,7 @@ import numpy as np
 import faiss
 import boto3
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'remote-vector-index-builder'))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from benchmarking.dataset.dataset_utils import prepare_search_dataset, prepare_indexing_dataset
 from benchmarking.utils.common_utils import recall_at_r
