@@ -226,10 +226,15 @@ file in this directory. For real AWS S3:
 cat > .dockerenv <<'EOF'
 AWS_ACCESS_KEY_ID=<your-access-key>
 AWS_SECRET_ACCESS_KEY=<your-secret-key>
+AWS_SESSION_TOKEN=<your-session-token>
 AWS_DEFAULT_REGION=us-east-1
 LOG_LEVEL=DEBUG
 EOF
 ```
+
+> `AWS_SESSION_TOKEN` is required when using temporary/STS credentials (e.g. an
+> assumed IAM role or SSO session). Omit it only if you are using long-lived IAM user
+> keys.
 
 > `LOG_LEVEL=DEBUG` is **required** — the per-stage timing columns are parsed from the
 > container's DEBUG log lines. Without it, only `total_time`, `status`, and memory
