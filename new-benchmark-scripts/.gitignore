@@ -1,0 +1,10 @@
+# Container env file — contains AWS credentials, never commit
+.dockerenv
+
+# Generated benchmark output
+*.csv
+!datasets.csv
+
+# Python
+__pycache__/
+*.pyc
