@@ -93,13 +93,28 @@ Then pass `--csv one.csv` (or `-c one.csv`) to any of the scripts below.
 
 ## Prerequisites
 
-- Python env with: `boto3`, `requests`, `psutil`, `pandas`, `numpy`, `faiss`, `tqdm`,
-  `py3nvml`, `h5py`, plus the repo's `benchmarking` package importable (the scripts add
-  it to `sys.path`). The conda environment described in the top-level
-  [`scripts/README.md`](../scripts/README.md) works.
 - AWS credentials configured for the target S3 bucket.
 - A GPU host with Docker and the NVIDIA container runtime (for `remote_build_csv.py`).
 - Local HDF5 dataset files (for `dataset_to_local.py` and `recall_test_csv.py`).
+- A conda environment with the required packages (see below).
+
+### Create the conda environment
+
+The scripts need `faiss-gpu-cuvs` plus a handful of Python packages (including
+`requests`, used by `remote_build_csv.py` to call the API container). Create and
+activate an environment:
+
+```bash
+conda create -n my_env -c conda-forge -c pytorch -c nvidia -c rapidsai \
+  python=3.12 faiss-gpu-cuvs=1.12.0 \
+  py3nvml pandas matplotlib psutil numpy tqdm pyyaml h5py boto3 requests
+conda activate my_env
+```
+
+This provides everything the three scripts import: `boto3`, `requests`, `psutil`,
+`pandas`, `numpy`, `faiss`, `tqdm`, `py3nvml`, and `h5py`. The scripts also import the
+repo's `benchmarking` package, which they add to `sys.path` automatically — no extra
+install needed.
 
 ---
 
