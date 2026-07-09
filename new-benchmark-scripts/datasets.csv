@@ -1,8 +1,5 @@
 filename,normalize,doc_count,dimensions,space_type
 sift.hdf5,false,1000000,128,l2
 ms-marco-384.hdf5,false,1000000,384,l2
-cohere-768-l2.hdf5,false,1000000,768,l2
 cohere-768-ip.hdf5,false,1000000,768,innerproduct
-gist.hdf5,false,1000000,960,l2
 open-ai-1536-temp.hdf5,false,1000000,1536,l2
-bigAnn-10M.hdf5,false,10000000,128,l2
