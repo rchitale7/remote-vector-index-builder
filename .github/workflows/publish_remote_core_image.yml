@@ -15,6 +15,12 @@ on:
       - '.github/workflows/publish_remote_api_image.yml'
 
   workflow_call: # enables workflow to be reused
+    inputs:
+      nested:
+        description: 'Set to true when the caller already holds the publish-snapshot-images concurrency lock.'
+        required: false
+        type: boolean
+        default: false
     secrets:
       REMOTE_VECTOR_DOCKER_USERNAME:
         required: true
@@ -27,8 +33,11 @@ permissions:
 
 # Serialize image-publishing pipelines so a base-image cascade and a core/app
 # push can never publish out of order or race for the shared snapshot tags.
+# When called from the base-image cascade the caller already holds that lock, so
+# the nested run takes a per-run group instead -- requesting the same group as
+# the caller is a deadlock and GitHub cancels the entire run.
 concurrency:
-  group: publish-snapshot-images
+  group: ${{ inputs.nested && format('publish-snapshot-images-nested-{0}', github.run_id) || 'publish-snapshot-images' }}
   cancel-in-progress: false
 
 jobs:
