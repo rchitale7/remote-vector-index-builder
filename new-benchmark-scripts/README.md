@@ -361,7 +361,6 @@ Single dataset: use a one-row `--csv` file.
 | `--graph-type` | `float` or `binary`. |
 | `--vector-type` | `float` or `binary`. |
 | `--datasets-dir` | Local dir with HDF5 files (for queries + ground truth). |
-| `--m` | HNSW M (default `16`), used when stitching a binary index. |
 | `--ef-search` | efSearch (default `256`). |
 | `--k` | k for recall (default `100`). |
 | `--region` | AWS region (default `us-east-1`). |

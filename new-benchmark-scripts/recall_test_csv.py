@@ -52,8 +52,11 @@ def recover_hnsw_entry(hnsw):
     logging.info(f"Recovered entry_point={hnsw.entry_point}, max_level={hnsw.max_level}")
 
 
-def build_binary_from_float_graph(graph_index, bq_vectors, dimension, M):
+def build_binary_from_float_graph(graph_index, bq_vectors, dimension):
     inner = faiss.downcast_index(graph_index.index) if isinstance(graph_index, faiss.IndexIDMap) else graph_index
+    # Take M from the graph itself: the base level holds 2 * M neighbor slots per vector, and the copied
+    # neighbor/offset arrays are only read correctly when the binary index uses the same slot count.
+    M = inner.hnsw.nb_neighbors(0) // 2
     binary_index = faiss.IndexBinaryHNSW(dimension, M)
     src, dst = inner.hnsw, binary_index.hnsw
 
@@ -74,7 +77,7 @@ def build_binary_from_float_graph(graph_index, bq_vectors, dimension, M):
     return binary_index
 
 
-def load_index(graph_path, vector_path, graph_type, vector_type, dimension, ef_search, M, is_ip=False):
+def load_index(graph_path, vector_path, graph_type, vector_type, dimension, ef_search, is_ip=False):
     if graph_type in VECTOR_DTYPES and vector_type in VECTOR_DTYPES:
         # float, half_float and byte builds all produce a float HNSW graph; the stored vectors (if any)
         # are in the build's data type and faiss converts float queries on search
@@ -93,7 +96,7 @@ def load_index(graph_path, vector_path, graph_type, vector_type, dimension, ef_s
     elif graph_type in VECTOR_DTYPES and vector_type == "binary":
         graph_index = faiss.read_index(graph_path)
         bq = np.fromfile(vector_path, dtype=np.uint8).reshape(-1, dimension // 8)
-        bi = build_binary_from_float_graph(graph_index, bq, dimension, M)
+        bi = build_binary_from_float_graph(graph_index, bq, dimension)
         bi.hnsw.efSearch = ef_search
         return bi, True
 
@@ -116,7 +119,6 @@ def main():
     parser.add_argument('--graph-type', required=True, choices=['float', 'half_float', 'byte', 'binary'])
     parser.add_argument('--vector-type', required=True, choices=['float', 'half_float', 'byte', 'binary'])
     parser.add_argument('--datasets-dir', required=True, help='Local dir with HDF5 files for ground truth')
-    parser.add_argument('--m', type=int, default=16)
     parser.add_argument('--ef-search', type=int, default=256)
     parser.add_argument('--k', type=int, default=100)
     parser.add_argument('--region', default='us-east-1')
@@ -167,7 +169,7 @@ def main():
 
             index, needs_quant = load_index(
                 tmp_graph, tmp_vec, args.graph_type, args.vector_type,
-                dimension, args.ef_search, args.m, is_ip
+                dimension, args.ef_search, is_ip
             )
             os.unlink(tmp_graph)
             if tmp_vec and os.path.exists(tmp_vec):
