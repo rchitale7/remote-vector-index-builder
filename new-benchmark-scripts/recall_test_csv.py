@@ -22,6 +22,7 @@ import tempfile
 import numpy as np
 import faiss
 import boto3
+import json
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -29,6 +30,9 @@ from benchmarking.dataset.dataset_utils import prepare_search_dataset, prepare_i
 from benchmarking.utils.common_utils import recall_at_r
 from timeit import default_timer as timer
 from tqdm import tqdm
+
+# numpy dtype of the .knnvec for each non-binary vector type
+VECTOR_DTYPES = {"float": "<f4", "half_float": "<f2", "byte": "<i1"}
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -71,11 +75,13 @@ def build_binary_from_float_graph(graph_index, bq_vectors, dimension, M):
 
 
 def load_index(graph_path, vector_path, graph_type, vector_type, dimension, ef_search, M, is_ip=False):
-    if graph_type == "float" and vector_type == "float":
+    if graph_type in VECTOR_DTYPES and vector_type in VECTOR_DTYPES:
+        # float, half_float and byte builds all produce a float HNSW graph; the stored vectors (if any)
+        # are in the build's data type and faiss converts float queries on search
         index = faiss.read_index(graph_path)
         inner = faiss.downcast_index(index.index) if isinstance(index, faiss.IndexIDMap) else index
         if inner.storage is None:
-            vecs = np.fromfile(vector_path, dtype=np.float32).reshape(-1, dimension)
+            vecs = np.fromfile(vector_path, dtype=VECTOR_DTYPES[vector_type]).astype(np.float32).reshape(-1, dimension)
             flat = faiss.IndexFlatIP(dimension) if is_ip else faiss.IndexFlatL2(dimension)
             flat.add(vecs)
             inner.storage = flat
@@ -84,7 +90,7 @@ def load_index(graph_path, vector_path, graph_type, vector_type, dimension, ef_s
         inner.hnsw.efSearch = ef_search
         return index, False
 
-    elif graph_type == "float" and vector_type == "binary":
+    elif graph_type in VECTOR_DTYPES and vector_type == "binary":
         graph_index = faiss.read_index(graph_path)
         bq = np.fromfile(vector_path, dtype=np.uint8).reshape(-1, dimension // 8)
         bi = build_binary_from_float_graph(graph_index, bq, dimension, M)
@@ -107,8 +113,8 @@ def main():
     parser.add_argument('--bucket', required=True)
     parser.add_argument('--graph-path', required=True, help='S3 prefix for .faiss graphs (e.g. datasets/float)')
     parser.add_argument('--vector-path', required=True, help='S3 prefix for .knnvec vectors (e.g. datasets/binary)')
-    parser.add_argument('--graph-type', required=True, choices=['float', 'binary'])
-    parser.add_argument('--vector-type', required=True, choices=['float', 'binary'])
+    parser.add_argument('--graph-type', required=True, choices=['float', 'half_float', 'byte', 'binary'])
+    parser.add_argument('--vector-type', required=True, choices=['float', 'half_float', 'byte', 'binary'])
     parser.add_argument('--datasets-dir', required=True, help='Local dir with HDF5 files for ground truth')
     parser.add_argument('--m', type=int, default=16)
     parser.add_argument('--ef-search', type=int, default=256)
@@ -148,7 +154,7 @@ def main():
             download_from_s3(s3, args.bucket, graph_key, tmp_graph)
 
             tmp_vec = None
-            needs_vectors = (args.graph_type != args.vector_type) or args.graph_type == "float"
+            needs_vectors = (args.graph_type != args.vector_type) or args.graph_type in VECTOR_DTYPES
             if needs_vectors:
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.knnvec') as f:
                     tmp_vec = f.name
@@ -177,6 +183,11 @@ def main():
 
             if needs_quant:
                 queries = np.packbits((query_vecs > thresholds).astype(np.uint8), axis=1)
+            elif "byte" in (args.graph_type, args.vector_type):
+                # Queries go into the same int8 space as the vectors staged by dataset_to_local.py --dtype byte
+                scale_obj = s3.get_object(Bucket=args.bucket, Key=f"{vector_base}/{basename}_byte_scale.json")
+                scale = json.loads(scale_obj["Body"].read())["scale"]
+                queries = np.clip(np.rint(query_vecs * scale), -128, 127).astype(np.float32)
             else:
                 queries = query_vecs
 

@@ -17,8 +17,9 @@ import psutil
 import pandas as pd
 from py3nvml import nvidia_smi
 
-DOCKER_IMAGE = "opensearchstaging/remote-vector-index-builder:api-snapshot"
+DEFAULT_DOCKER_IMAGE = "opensearchstaging/remote-vector-index-builder:api-snapshot"
 CONTAINER_NAME = "remote-index-builder"
+API_URL = "http://127.0.0.1:80"
 
 TIMING_PATTERNS = [
     ("vector_download_time", r"Vector download time for vector path .+?: (.+)"),
@@ -139,34 +140,40 @@ def parse_logs_for_job(vec_path, all_logs):
     return metrics
 
 
-def wait_for_job(vec_path, timeout=3600, poll_interval=5):
+def wait_for_job(job_id, timeout=3600, poll_interval=2):
+    """Polls /_status/{job_id} until the job leaves RUNNING. Returns (status, status response)."""
     start = time.time()
     while time.time() - start < timeout:
-        logs = get_docker_logs()
-        for line in logs:
-            if vec_path in line and "completed with status:" in line:
-                return "COMPLETED"
-            if vec_path in line and ("FAILED" in line or "error" in line.lower()):
-                return "FAILED"
+        try:
+            status = requests.get(f"{API_URL}/_status/{job_id}").json()
+            if status.get("task_status") in ("COMPLETED_INDEX_BUILD", "FAILED_INDEX_BUILD"):
+                return status["task_status"], status
+        except requests.RequestException:
+            pass
         result = subprocess.run(
             ["docker", "inspect", "-f", "{{.State.Running}}", CONTAINER_NAME],
             capture_output=True, text=True
         )
         if result.stdout.strip() != "true":
-            return "CONTAINER_EXITED"
+            return "CONTAINER_EXITED", {}
         time.sleep(poll_interval)
-    return "TIMEOUT"
+    return "TIMEOUT", {}
 
 
 def main():
     parser = argparse.ArgumentParser(description="Remote vector index build from CSV")
     parser.add_argument("-b", "--s3-bucket", required=True)
     parser.add_argument("-s", "--s3-base-path", required=True, help="S3 base path (e.g. datasets/float)")
-    parser.add_argument("-t", "--data-type", required=True, choices=["float", "half_float", "binary"])
+    parser.add_argument("-t", "--data-type", required=True, choices=["float", "half_float", "byte", "binary"])
     parser.add_argument("-c", "--csv", required=True, help="CSV file listing datasets")
     parser.add_argument("-g", "--skip-stored-vectors", action="store_true")
     parser.add_argument("-o", "--output", default="results.csv", help="Output CSV file")
+    parser.add_argument("-i", "--image", default=DEFAULT_DOCKER_IMAGE, help="API docker image to benchmark")
+    parser.add_argument("-m", "--m", type=int, default=16, help="HNSW m sent in the build request")
+    parser.add_argument("-r", "--region", default="us-east-1", help="AWS region of the S3 bucket")
     args = parser.parse_args()
+
+    s3_client = boto3.client("s3", region_name=args.region)
 
     with open(args.csv) as f:
         datasets = list(csv.DictReader(f))
@@ -174,18 +181,23 @@ def main():
     # Stop any existing container
     subprocess.run(["docker", "rm", "-f", CONTAINER_NAME], capture_output=True)
 
-    print("Starting docker container...")
+    # Without a .dockerenv, the container falls back to the host's instance role (needs IMDS hop limit >= 2)
+    env_args = ["--env-file", ".dockerenv"] if os.path.exists(".dockerenv") else []
+    print(f"Starting docker container from {args.image} ...")
     proc = subprocess.Popen([
         "docker", "run", "--name", CONTAINER_NAME,
-        "--env-file", ".dockerenv",
+        *env_args,
+        "-e", "LOG_LEVEL=DEBUG",
+        "-e", f"AWS_DEFAULT_REGION={args.region}",
         "--gpus", "all",
-        "-p", "80:1025",
-        DOCKER_IMAGE
+        # Only reachable from this host
+        "-p", "127.0.0.1:80:1025",
+        args.image
     ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     for i in range(30):
         try:
-            requests.get("http://0.0.0.0:80/_heart_beat")
+            requests.get(f"{API_URL}/_heart_beat")
             print("Container is ready.")
             break
         except requests.ConnectionError:
@@ -195,6 +207,10 @@ def main():
         subprocess.run(["docker", "logs", CONTAINER_NAME])
         proc.terminate()
         exit(1)
+
+    image_digest = subprocess.run(
+        ["docker", "image", "inspect", "-f", "{{index .RepoDigests 0}}", args.image], capture_output=True, text=True
+    ).stdout.strip()
 
     s3_base = args.s3_base_path.strip("/")
     all_results = []
@@ -217,6 +233,7 @@ def main():
             "data_type": args.data_type,
             "index_parameters": {
                 "space_type": space_type,
+                "algorithm_parameters": {"m": args.m},
             },
             "skip_stored_vectors": args.skip_stored_vectors,
         }
@@ -225,15 +242,16 @@ def main():
         monitor.start()
 
         print(f"\nBuilding index for {basename} ({dimension}d, {doc_count} docs, {space_type}) ...")
-        r = requests.post("http://0.0.0.0:80/_build", json=payload)
+        r = requests.post(f"{API_URL}/_build", json=payload)
         resp_json = r.json()
         print(json.dumps(resp_json, indent=2))
 
         job_id = resp_json.get("job_id")
+        status, status_response = "NOT_SUBMITTED", {}
         if job_id:
             print(f"Waiting for job {job_id} ...")
-            status = wait_for_job(vec_path)
-            print(f"Job status: {status}")
+            status, status_response = wait_for_job(job_id)
+            print(f"Job status: {status} {status_response.get('error_message', '')}")
 
         monitor.stop()
         mem = monitor.report()
@@ -248,8 +266,20 @@ def main():
             "data_type": args.data_type,
             "space_type": space_type,
             "skip_stored_vectors": args.skip_stored_vectors,
+            "m": args.m,
+            "image": image_digest or args.image,
         }
         row.update(log_metrics)
+        row["status"] = status
+        row["error_message"] = status_response.get("error_message", "")
+        index_size_mb = None
+        if status == "COMPLETED_INDEX_BUILD":
+            try:
+                head = s3_client.head_object(Bucket=args.s3_bucket, Key=f"{s3_base}/{basename}.faiss")
+                index_size_mb = round(head["ContentLength"] / (1024 * 1024), 2)
+            except Exception as e:
+                print(f"Could not read index size: {e}")
+        row["index_size_mb"] = index_size_mb
         row.update(mem)
         all_results.append(row)
 
