@@ -171,6 +171,8 @@ def main():
     parser.add_argument("-i", "--image", default=DEFAULT_DOCKER_IMAGE, help="API docker image to benchmark")
     parser.add_argument("-m", "--m", type=int, default=16, help="HNSW m sent in the build request")
     parser.add_argument("-r", "--region", default="us-east-1", help="AWS region of the S3 bucket")
+    parser.add_argument("--job-timeout-minutes", type=float, default=240,
+                        help="Give up polling a build after this long and record TIMEOUT (large m / large segments can exceed 1 h)")
     args = parser.parse_args()
 
     s3_client = boto3.client("s3", region_name=args.region)
@@ -250,7 +252,7 @@ def main():
         status, status_response = "NOT_SUBMITTED", {}
         if job_id:
             print(f"Waiting for job {job_id} ...")
-            status, status_response = wait_for_job(job_id)
+            status, status_response = wait_for_job(job_id, timeout=args.job_timeout_minutes * 60)
             print(f"Job status: {status} {status_response.get('error_message', '')}")
 
         monitor.stop()

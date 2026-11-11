@@ -305,6 +305,8 @@ Single dataset: use a one-row `--csv`/`-c` file.
 | `-c`, `--csv` | Dataset manifest. |
 | `-g`, `--skip-stored-vectors` | Build graph only; skip storing vectors in the index (sends `skip_stored_vectors=true` to `/_build`). |
 | `-o`, `--output` | Output CSV (default `results.csv`). |
+| `-m`, `--m` | HNSW `m` sent in the build request (default 16). |
+| `--job-timeout-minutes` | Stop polling a build after this long and record `TIMEOUT` (default 240; builds with a large `m` on 10M-scale segments can take over an hour). |
 
 ### Output columns
 
