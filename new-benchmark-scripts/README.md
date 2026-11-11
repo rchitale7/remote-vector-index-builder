@@ -56,6 +56,7 @@ code under a different tag, run the benchmark, and diff the two output CSVs.
 | Script | Purpose |
 | --- | --- |
 | `dataset_to_local.py` | Convert local HDF5 datasets to `.knnvec` / `_ids.knndid` and upload to S3 (float or one-bit quantized binary). |
+| `synthetic_dataset.py` | Generate a synthetic Gaussian-mixture dataset of any shape and stream it to S3 as `.knnvec` / `_ids.knndid` (for build time and memory only; no ground truth, so no recall). |
 | `remote_build_csv.py` | Run the API docker container and build an index per dataset, capturing download / build / conversion / write / upload times, total time, and peak CPU/GPU memory into a CSV. |
 | `recall_test_csv.py` | Download built indices from S3 and measure recall@k, recall@1, recall@100, search time, and throughput per dataset. |
 | `datasets.csv` | Dataset manifest consumed by all three scripts. |
@@ -208,6 +209,22 @@ Single dataset: point `--csv` at a one-row CSV as shown above.
 | `--s3-prefix` | Key prefix, e.g. `datasets/float` or `datasets/binary`. |
 | `--region` | AWS region (default `us-east-1`). |
 | `--quantize` | Apply one-bit scalar quantization (binary output). |
+
+### Synthetic datasets — `synthetic_dataset.py`
+
+For shapes no public dataset has (e.g. 8.33M × 1024), generate vectors instead of converting an HDF5 file:
+
+```bash
+python synthetic_dataset.py --name synthetic-8330000-1024-innerproduct \
+  --doc-count 8330000 --dimension 1024 --space-type innerproduct \
+  --bucket "$BUCKET" --s3-prefix datasets/float --dtype float32 --region us-east-1
+```
+
+Vectors come from a Gaussian mixture (`--clusters`, `--noise`, `--seed`) and are L2-normalized for
+`innerproduct` / `cosinesimil`. The same seed gives the same vectors for `--dtype float32` and `float16`.
+The upload is streamed in parts, so host memory stays at one chunk. Add a matching row to the manifest
+(`synthetic-8330000-1024-innerproduct.hdf5,false,8330000,1024,innerproduct`) so `remote_build_csv.py` can
+build it. There's no ground truth, so don't run `recall_test_csv.py` on it.
 
 ---
 
