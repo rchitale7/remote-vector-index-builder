@@ -162,8 +162,8 @@ def main():
                     tmp_vec = f.name
                 try:
                     download_from_s3(s3, args.bucket, vector_key, tmp_vec)
-                except Exception:
-                    logging.warning(f"Vector file not found: {vector_key}, skipping")
+                except Exception as e:
+                    logging.warning(f"Could not download vectors {vector_key} to {tmp_vec}: {e!r}; skipping")
                     os.unlink(tmp_graph)
                     continue
 
