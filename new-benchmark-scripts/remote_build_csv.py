@@ -170,6 +170,8 @@ def main():
     parser.add_argument("-o", "--output", default="results.csv", help="Output CSV file")
     parser.add_argument("-i", "--image", default=DEFAULT_DOCKER_IMAGE, help="API docker image to benchmark")
     parser.add_argument("-m", "--m", type=int, default=16, help="HNSW m sent in the build request")
+    parser.add_argument("--ef-construction", type=int, default=None,
+                        help="HNSW ef_construction sent in the build request (omitted by default, so the service default applies)")
     parser.add_argument("-r", "--region", default="us-east-1", help="AWS region of the S3 bucket")
     parser.add_argument("--job-timeout-minutes", type=float, default=240,
                         help="Give up polling a build after this long and record TIMEOUT (large m / large segments can exceed 1 h)")
@@ -235,7 +237,7 @@ def main():
             "data_type": args.data_type,
             "index_parameters": {
                 "space_type": space_type,
-                "algorithm_parameters": {"m": args.m},
+                "algorithm_parameters": {"m": args.m, **({"ef_construction": args.ef_construction} if args.ef_construction else {})},
             },
             "skip_stored_vectors": args.skip_stored_vectors,
         }
